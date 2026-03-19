@@ -6,7 +6,7 @@
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig prompt.
  */
 export async function expandPrompt({ motiv, scene }) {
-  const response = await fetch('/.netlify/functions/expand-prompt', {
+  const response = await fetch('/api/expand-prompt', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -43,7 +43,7 @@ export async function expandPrompt({ motiv, scene }) {
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig bilde-URL.
  */
 export async function generateImage({ expandedPrompt }) {
-  const response = await fetch('/.netlify/functions/generate-image', {
+  const response = await fetch('/api/generate-image', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ export async function generateImage({ expandedPrompt }) {
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig respons.
  */
 export async function saveImage({ motiv, scene, expandedPrompt, imageData }) {
-  const response = await fetch('/.netlify/functions/save-image', {
+  const response = await fetch('/api/save-image', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ export async function saveImage({ motiv, scene, expandedPrompt, imageData }) {
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig bildeliste.
  */
 export async function getImages() {
-  const response = await fetch('/.netlify/functions/get-images', {
+  const response = await fetch('/api/get-images', {
     method: 'GET',
   })
 
@@ -151,7 +151,7 @@ export async function getImages() {
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig promptliste.
  */
 export async function getPrompts() {
-  const response = await fetch('/.netlify/functions/get-prompts', {
+  const response = await fetch('/api/get-prompts', {
     method: 'GET',
   })
 
@@ -184,7 +184,7 @@ export async function getPrompts() {
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig respons.
  */
 export async function updatePrompt({ name, content }) {
-  const response = await fetch('/.netlify/functions/update-prompt', {
+  const response = await fetch('/api/update-prompt', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ export async function updatePrompt({ name, content }) {
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig respons.
  */
 export async function deleteImage({ id }) {
-  const response = await fetch('/.netlify/functions/delete-image', {
+  const response = await fetch('/api/delete-image', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

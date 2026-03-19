@@ -7,7 +7,7 @@ utvider til et rikt engelsk bildeprompt. Flux genererer illustrasjonen.
 
 ## Stack
 - React + Vite + Tailwind CSS (frontend)
-- Netlify Functions (serverless API-funksjoner)
+- Vercel serverless functions (API routes)
 - OpenRouter API (både tekst og bilde)
 
 ## Modeller
@@ -15,7 +15,7 @@ utvider til et rikt engelsk bildeprompt. Flux genererer illustrasjonen.
 - Bildegenerering: black-forest-labs/flux.2-klein-4b
 
 ## API-nøkler
-- OPENROUTER_API_KEY lagres som miljøvariabel i Netlify
+- OPENROUTER_API_KEY lagres som miljøvariabel i Vercel
 - Skal aldri eksponeres i frontend-kode
 
 
@@ -35,8 +35,7 @@ utvider til et rikt engelsk bildeprompt. Flux genererer illustrasjonen.
 src/
   components/    # React-komponenter
   utils/         # Hjelpefunksjoner
-netlify/
-  functions/     # Serverless functions (expand-prompt.js, generate-image.js)
+api/          # Vercel serverless functions (expand-prompt.js, generate-image.js)
 
 ## Konvensjoner
 - Komponentfiler: PascalCase (f.eks. PromptForm.jsx)
@@ -46,7 +45,7 @@ netlify/
 - Én komponent per fil
 
 ## Deploy
-- Netlify, automatisk ved push til main
+- Vercel, automatisk ved push til main
 - Build-kommando: npm run build
 - Output-mappe: dist
-- Functions-mappe: netlify/functions
+- Functions-mappe: api/

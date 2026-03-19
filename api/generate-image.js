@@ -7,13 +7,8 @@ continuous line drawing. Very minimal detail, almost no shading.
 The drawing should feel quick, slightly messy and unfinished.
 Large empty background.`
 
-const createJsonResponse = (statusCode, payload) => ({
-  statusCode,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(payload),
-})
+const createJsonResponse = (res, statusCode, payload) =>
+  res.status(statusCode).json(payload)
 
 const getImageUrlFromResponse = (data) => {
   const message = data?.choices?.[0]?.message
@@ -33,29 +28,22 @@ const getImageUrlFromResponse = (data) => {
   )
 }
 
-export async function handler(event) {
-  if (event.httpMethod !== 'POST') {
-    return createJsonResponse(405, { error: 'Method Not Allowed' })
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return createJsonResponse(res, 405, { error: 'Method Not Allowed' })
   }
 
   const apiKey = process.env.STREKI_OPEN_ROUTER_KEY
 
   if (!apiKey) {
-    return createJsonResponse(500, { error: 'Server configuration error' })
+    return createJsonResponse(res, 500, { error: 'Server configuration error' })
   }
 
-  let payload
-
-  try {
-    payload = JSON.parse(event.body ?? '{}')
-  } catch {
-    return createJsonResponse(400, { error: 'Invalid JSON body' })
-  }
-
+  const payload = req.body ?? {}
   const expandedPrompt = payload.expandedPrompt?.trim()
 
   if (!expandedPrompt) {
-    return createJsonResponse(400, { error: 'Field expandedPrompt is required' })
+    return createJsonResponse(res, 400, { error: 'Field expandedPrompt is required' })
   }
 
   const prompt = `${expandedPrompt}\n\n${STYLE_PROMPT}`
@@ -83,18 +71,18 @@ export async function handler(event) {
 
     if (!response.ok) {
       const errorMessage = data?.error?.message ?? 'Failed to generate image'
-      return createJsonResponse(response.status, { error: errorMessage })
+      return createJsonResponse(res, response.status, { error: errorMessage })
     }
 
     const imageUrl = getImageUrlFromResponse(data)
 
     if (!imageUrl) {
-      return createJsonResponse(502, { error: 'OpenRouter returned no image URL' })
+      return createJsonResponse(res, 502, { error: 'OpenRouter returned no image URL' })
     }
 
-    return createJsonResponse(200, { imageUrl })
+    return createJsonResponse(res, 200, { imageUrl })
   } catch (error) {
     console.error('Error generating image:', error)
-    return createJsonResponse(502, { error: 'Unable to reach OpenRouter' })
+    return createJsonResponse(res, 502, { error: 'Unable to reach OpenRouter' })
   }
 }
