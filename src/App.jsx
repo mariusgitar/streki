@@ -1,25 +1,77 @@
 import React, { useState } from 'react'
 import PromptForm from './components/PromptForm'
-import { expandPrompt, generateImage } from './utils/apiUtils'
+import { expandPrompt, generateImage, saveImage } from './utils/apiUtils'
+
+const getBase64ImageData = (imageUrl) => {
+  if (typeof imageUrl !== 'string') {
+    return ''
+  }
+
+  const dataUrlPrefix = 'base64,'
+  const base64Index = imageUrl.indexOf(dataUrlPrefix)
+
+  if (base64Index === -1) {
+    return imageUrl
+  }
+
+  return imageUrl.slice(base64Index + dataUrlPrefix.length)
+}
 
 function App() {
   const [isLoading, setIsLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+  const [motiv, setMotiv] = useState('')
+  const [scene, setScene] = useState('')
+  const [expandedPrompt, setExpandedPrompt] = useState('')
+  const [imageData, setImageData] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveErrorMessage, setSaveErrorMessage] = useState('')
+  const [isSaved, setIsSaved] = useState(false)
 
   const handleSubmit = async ({ motiv, scene }) => {
     setIsLoading(true)
     setImageUrl('')
     setErrorMessage('')
+    setMotiv(motiv)
+    setScene(scene)
+    setExpandedPrompt('')
+    setImageData('')
+    setIsSaving(false)
+    setSaveErrorMessage('')
+    setIsSaved(false)
 
     try {
-      const expandedPrompt = await expandPrompt({ motiv, scene })
-      const nextImageUrl = await generateImage({ expandedPrompt })
+      const nextExpandedPrompt = await expandPrompt({ motiv, scene })
+      const nextImageUrl = await generateImage({ expandedPrompt: nextExpandedPrompt })
+
+      setExpandedPrompt(nextExpandedPrompt)
       setImageUrl(nextImageUrl)
+      setImageData(getBase64ImageData(nextImageUrl))
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Noe gikk galt. Prøv igjen.')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleSaveImage = async () => {
+    setIsSaving(true)
+    setSaveErrorMessage('')
+
+    try {
+      await saveImage({
+        motiv,
+        scene,
+        expandedPrompt,
+        imageData,
+      })
+
+      setIsSaved(true)
+    } catch (error) {
+      setSaveErrorMessage(error instanceof Error ? error.message : 'Noe gikk galt ved lagring. Prøv igjen.')
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -35,6 +87,13 @@ function App() {
         {imageUrl ? (
           <div className="mt-8">
             <img src={imageUrl} alt="Generert illustrasjon" className="mx-auto max-w-full" />
+            {isSaved ? <p className="mt-4">Lagret!</p> : null}
+            {!isSaved ? (
+              <button type="button" onClick={handleSaveImage} disabled={isSaving} className="mt-4">
+                {isSaving ? 'Lagrer...' : 'Lagre i bildebanken'}
+              </button>
+            ) : null}
+            {saveErrorMessage ? <p className="mt-4 text-red-600">{saveErrorMessage}</p> : null}
           </div>
         ) : null}
       </div>
