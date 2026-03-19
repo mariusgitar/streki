@@ -71,3 +71,43 @@ export async function generateImage({ expandedPrompt }) {
 
   return data.imageUrl
 }
+
+/**
+ * Lagrer et generert bilde i bildebanken.
+ *
+ * @param {{ motiv: string, scene: string, expandedPrompt: string, imageData: string }} params - Feltene som skal lagres.
+ * @returns {Promise<{ ok: boolean, id: string | number }>} Resultatet fra serveren.
+ * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig respons.
+ */
+export async function saveImage({ motiv, scene, expandedPrompt, imageData }) {
+  const response = await fetch('/.netlify/functions/save-image', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ motiv, scene, expandedPrompt, imageData }),
+  })
+
+  let data = null
+
+  try {
+    data = await response.json()
+  } catch {
+    if (!response.ok) {
+      throw new Error('Kunne ikke lagre bildet på grunn av en ugyldig serverrespons.')
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'Kunne ikke lagre bildet. Prøv igjen.')
+  }
+
+  if (data?.ok !== true || (!data?.id && data?.id !== 0)) {
+    throw new Error('Serveren returnerte ikke en gyldig lagringsbekreftelse.')
+  }
+
+  return {
+    ok: data.ok,
+    id: data.id,
+  }
+}
