@@ -1,12 +1,21 @@
-const SYSTEM_PROMPT = `You are an assistant that helps create prompts for an illustration
-model. The user will describe a motif and a scene in Norwegian.
-Translate and expand this into a detailed English description of
-the motif and scene only — what is happening, who is there, and
-the setting. Be concise but vivid. Do not describe any art style.
-Return only the expanded description, no explanations or extra text.`
+import pg from 'pg'
+
+const { Pool } = pg
 
 const createJsonResponse = (res, statusCode, payload) =>
   res.status(statusCode).json(payload)
+
+const pool = new Pool({
+  connectionString: process.env.NEON_DATABASE_URL,
+})
+
+const getSystemPrompt = async () => {
+  const result = await pool.query(
+    "SELECT content FROM prompts WHERE name = 'system_prompt' LIMIT 1"
+  )
+
+  return result.rows[0]?.content?.trim() ?? null
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -17,6 +26,10 @@ export default async function handler(req, res) {
 
   if (!apiKey) {
     return createJsonResponse(res, 500, { error: 'Server configuration error' })
+  }
+
+  if (!process.env.NEON_DATABASE_URL) {
+    return createJsonResponse(res, 500, { error: 'Missing NEON_DATABASE_URL configuration' })
   }
 
   const payload = req.body ?? {}
@@ -30,6 +43,14 @@ export default async function handler(req, res) {
   const userPrompt = `Lag et detaljert engelsk bildeprompt basert på\ndette. Motiv: ${motiv}. Scene: ${scene}.`
 
   try {
+    const systemPrompt = await getSystemPrompt()
+
+    if (!systemPrompt) {
+      return createJsonResponse(res, 500, {
+        error: "Missing prompt content for name 'system_prompt' in prompts table",
+      })
+    }
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -39,7 +60,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash-lite',
         messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt },
         ],
       }),
