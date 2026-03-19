@@ -46,7 +46,7 @@ function App() {
     loadImages()
   }, [])
 
-  const handleSubmit = async ({ motiv, scene }) => {
+  const handleSubmit = async ({ motiv, scene, skipSave }) => {
     setIsLoading(true)
     setImageUrl('')
     setErrorMessage('')
@@ -61,35 +61,35 @@ function App() {
     try {
       const nextExpandedPrompt = await expandPrompt({ motiv, scene })
       const nextImageUrl = await generateImage({ expandedPrompt: nextExpandedPrompt })
+      const nextImageData = getBase64ImageData(nextImageUrl)
 
       setExpandedPrompt(nextExpandedPrompt)
       setImageUrl(nextImageUrl)
-      setImageData(getBase64ImageData(nextImageUrl))
+      setImageData(nextImageData)
+
+      if (!skipSave) {
+        setIsSaving(true)
+
+        try {
+          await saveImage({
+            motiv,
+            scene,
+            expandedPrompt: nextExpandedPrompt,
+            imageData: nextImageData,
+          })
+
+          setIsSaved(true)
+          await loadImages()
+        } catch (error) {
+          setSaveErrorMessage(error instanceof Error ? error.message : 'Noe gikk galt ved lagring. Prøv igjen.')
+        } finally {
+          setIsSaving(false)
+        }
+      }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Noe gikk galt. Prøv igjen.')
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const handleSaveImage = async () => {
-    setIsSaving(true)
-    setSaveErrorMessage('')
-
-    try {
-      await saveImage({
-        motiv,
-        scene,
-        expandedPrompt,
-        imageData,
-      })
-
-      setIsSaved(true)
-      await loadImages()
-    } catch (error) {
-      setSaveErrorMessage(error instanceof Error ? error.message : 'Noe gikk galt ved lagring. Prøv igjen.')
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -105,12 +105,8 @@ function App() {
         {imageUrl ? (
           <div className="mt-8">
             <img src={imageUrl} alt="Generert illustrasjon" className="mx-auto max-w-full" />
-            {isSaved ? <p className="mt-4">Lagret!</p> : null}
-            {!isSaved ? (
-              <button type="button" onClick={handleSaveImage} disabled={isSaving} className="mt-4">
-                {isSaving ? 'Lagrer...' : 'Lagre i bildebanken'}
-              </button>
-            ) : null}
+            {isSaving ? <p className="mt-4 text-sm text-slate-500">Lagrer i bildebanken...</p> : null}
+            {isSaved ? <p className="mt-4 text-sm text-slate-500">Lagret i bildebanken</p> : null}
             {saveErrorMessage ? <p className="mt-4 text-red-600">{saveErrorMessage}</p> : null}
           </div>
         ) : null}
