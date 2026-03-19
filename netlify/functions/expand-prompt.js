@@ -1,6 +1,9 @@
-const SYSTEM_PROMPT = `Du er en hjelpsom assistent som lager presise
-engelske bildeprompts for en illustrasjonsmodell. Svar kun med
-selve prompten, ingen forklaringer eller ekstra tekst.`
+const SYSTEM_PROMPT = `You are an assistant that helps create prompts for an illustration
+model. The user will describe a motif and a scene in Norwegian.
+Translate and expand this into a detailed English description of
+the motif and scene only — what is happening, who is there, and
+the setting. Be concise but vivid. Do not describe any art style.
+Return only the expanded description, no explanations or extra text.`
 
 const createJsonResponse = (statusCode, payload) => ({
   statusCode,
