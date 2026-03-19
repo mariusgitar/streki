@@ -111,3 +111,36 @@ export async function saveImage({ motiv, scene, expandedPrompt, imageData }) {
     id: data.id,
   }
 }
+
+
+/**
+ * Henter lagrede bilder fra bildebanken.
+ *
+ * @returns {Promise<Array>} Liste over lagrede bildeobjekter.
+ * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig bildeliste.
+ */
+export async function getImages() {
+  const response = await fetch('/.netlify/functions/get-images', {
+    method: 'GET',
+  })
+
+  let data = null
+
+  try {
+    data = await response.json()
+  } catch {
+    if (!response.ok) {
+      throw new Error('Kunne ikke hente bilder på grunn av en ugyldig serverrespons.')
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'Kunne ikke hente bilder. Prøv igjen.')
+  }
+
+  if (!Array.isArray(data?.images)) {
+    throw new Error('Serveren returnerte ingen gyldig bildeliste.')
+  }
+
+  return data.images
+}

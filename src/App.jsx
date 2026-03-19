@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import ImageGallery from './components/ImageGallery'
 import PromptForm from './components/PromptForm'
-import { expandPrompt, generateImage, saveImage } from './utils/apiUtils'
+import { expandPrompt, generateImage, getImages, saveImage } from './utils/apiUtils'
 
 const getBase64ImageData = (imageUrl) => {
   if (typeof imageUrl !== 'string') {
@@ -28,6 +29,22 @@ function App() {
   const [isSaving, setIsSaving] = useState(false)
   const [saveErrorMessage, setSaveErrorMessage] = useState('')
   const [isSaved, setIsSaved] = useState(false)
+  const [images, setImages] = useState([])
+  const [galleryErrorMessage, setGalleryErrorMessage] = useState('')
+
+  const loadImages = async () => {
+    try {
+      const nextImages = await getImages()
+      setImages(nextImages)
+      setGalleryErrorMessage('')
+    } catch (error) {
+      setGalleryErrorMessage(error instanceof Error ? error.message : 'Kunne ikke hente bildegalleriet.')
+    }
+  }
+
+  useEffect(() => {
+    loadImages()
+  }, [])
 
   const handleSubmit = async ({ motiv, scene }) => {
     setIsLoading(true)
@@ -68,6 +85,7 @@ function App() {
       })
 
       setIsSaved(true)
+      await loadImages()
     } catch (error) {
       setSaveErrorMessage(error instanceof Error ? error.message : 'Noe gikk galt ved lagring. Prøv igjen.')
     } finally {
@@ -96,6 +114,9 @@ function App() {
             {saveErrorMessage ? <p className="mt-4 text-red-600">{saveErrorMessage}</p> : null}
           </div>
         ) : null}
+
+        {galleryErrorMessage ? <p className="mt-8 text-red-600">{galleryErrorMessage}</p> : null}
+        <ImageGallery images={images} />
       </div>
     </main>
   )
