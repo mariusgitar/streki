@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react'
+import { BrowserRouter, Link, Route, Routes } from 'react-router-dom'
+import AdminPage from './components/AdminPage'
 import ImageGallery from './components/ImageGallery'
 import SearchBar from './components/SearchBar'
 import PromptForm from './components/PromptForm'
@@ -19,7 +21,7 @@ const getBase64ImageData = (imageUrl) => {
   return imageUrl.slice(base64Index + dataUrlPrefix.length)
 }
 
-function App() {
+function HomePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
@@ -116,8 +118,27 @@ function App() {
         {galleryErrorMessage ? <p className="mt-8 text-red-600">{galleryErrorMessage}</p> : null}
         <SearchBar query={searchQuery} onSearch={setSearchQuery} />
         <ImageGallery images={images} searchQuery={searchQuery} />
+        <div className="mt-10 text-center">
+          <Link
+            to="/admin"
+            className="text-sm text-slate-500 underline decoration-slate-300 underline-offset-4 transition hover:text-slate-700"
+          >
+            Admin
+          </Link>
+        </div>
       </div>
     </main>
+  )
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/admin" element={<AdminPage />} />
+      </Routes>
+    </BrowserRouter>
   )
 }
 
