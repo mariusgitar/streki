@@ -6,6 +6,7 @@ export default defineConfig({
   resolve: {
     alias: {
       'react-router-dom': '/src/vendor/react-router-dom.jsx',
+      '@lottiefiles/dotlottie-react': '/src/vendor/dotlottie-react.jsx',
     },
   },
 })
