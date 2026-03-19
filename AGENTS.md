@@ -18,6 +18,19 @@ utvider til et rikt engelsk bildeprompt. Flux genererer illustrasjonen.
 - OPENROUTER_API_KEY lagres som miljøvariabel i Netlify
 - Skal aldri eksponeres i frontend-kode
 
+
+## Database
+- Neon Postgres (serverless)
+- Tilkobling via miljøvariabelen NEON_DATABASE_URL
+- Tabeller:
+  - images (id, motiv, scene, expanded_prompt, image_data, created_at)
+  - prompts (id, name, content, updated_at)
+- Bilder lagres som base64-streng i image_data-kolonnen
+
+## Miljøvariabler
+- STREKI_OPEN_ROUTER_KEY — OpenRouter API-nøkkel
+- NEON_DATABASE_URL — Neon connection string
+
 ## Filstruktur
 src/
   components/    # React-komponenter
