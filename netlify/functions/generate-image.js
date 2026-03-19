@@ -1,3 +1,12 @@
+const STYLE_PROMPT = `Style: Black and white hand-drawn
+illustration in a rough editorial sketch style. Imperfect, wobbly
+lines with inconsistent line weight. Lines are slightly broken and
+not continuous, with a few overlapping sketch lines and small
+corrections. Use as few lines as possible, but avoid clean
+continuous line drawing. Very minimal detail, almost no shading.
+The drawing should feel quick, slightly messy and unfinished.
+Large empty background.`
+
 const createJsonResponse = (statusCode, payload) => ({
   statusCode,
   headers: {
@@ -49,6 +58,8 @@ export async function handler(event) {
     return createJsonResponse(400, { error: 'Field expandedPrompt is required' })
   }
 
+  const prompt = `${expandedPrompt}\n\n${STYLE_PROMPT}`
+
   try {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -62,7 +73,7 @@ export async function handler(event) {
         messages: [
           {
             role: 'user',
-            content: expandedPrompt,
+            content: prompt,
           },
         ],
       }),
