@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import ImageGallery from './components/ImageGallery'
+import SearchBar from './components/SearchBar'
 import PromptForm from './components/PromptForm'
 import { expandPrompt, generateImage, getImages, saveImage } from './utils/apiUtils'
 
@@ -31,6 +32,7 @@ function App() {
   const [isSaved, setIsSaved] = useState(false)
   const [images, setImages] = useState([])
   const [galleryErrorMessage, setGalleryErrorMessage] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const loadImages = async () => {
     try {
@@ -112,7 +114,8 @@ function App() {
         ) : null}
 
         {galleryErrorMessage ? <p className="mt-8 text-red-600">{galleryErrorMessage}</p> : null}
-        <ImageGallery images={images} />
+        <SearchBar query={searchQuery} onSearch={setSearchQuery} />
+        <ImageGallery images={images} searchQuery={searchQuery} />
       </div>
     </main>
   )
