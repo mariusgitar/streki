@@ -3,6 +3,7 @@ import React, { useState } from 'react'
 function PromptForm({ onSubmit }) {
   const [motiv, setMotiv] = useState('')
   const [scene, setScene] = useState('')
+  const [skipSave, setSkipSave] = useState(false)
   const [errors, setErrors] = useState({})
 
   const handleSubmit = (event) => {
@@ -24,7 +25,7 @@ function PromptForm({ onSubmit }) {
       return
     }
 
-    onSubmit({ motiv: motiv.trim(), scene: scene.trim() })
+    onSubmit({ motiv: motiv.trim(), scene: scene.trim(), skipSave })
   }
 
   return (
@@ -58,12 +59,25 @@ function PromptForm({ onSubmit }) {
         {errors.scene ? <p className="mt-2 text-sm text-red-600">{errors.scene}</p> : null}
       </div>
 
-      <button
-        type="submit"
-        className="inline-flex rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
-      >
-        Lag illustrasjon
-      </button>
+      <div>
+        <button
+          type="submit"
+          className="inline-flex rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700"
+        >
+          Lag illustrasjon
+        </button>
+      </div>
+
+      <label className="flex items-center gap-3 text-sm text-slate-700" htmlFor="skip-save">
+        <input
+          id="skip-save"
+          type="checkbox"
+          checked={skipSave}
+          onChange={(event) => setSkipSave(event.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+        />
+        Ikke lagre i bildebanken
+      </label>
     </form>
   )
 }
