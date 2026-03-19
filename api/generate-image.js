@@ -1,14 +1,21 @@
-const STYLE_PROMPT = `Style: Black and white hand-drawn
-illustration in a rough editorial sketch style. Imperfect, wobbly
-lines with inconsistent line weight. Lines are slightly broken and
-not continuous, with a few overlapping sketch lines and small
-corrections. Use as few lines as possible, but avoid clean
-continuous line drawing. Very minimal detail, almost no shading.
-The drawing should feel quick, slightly messy and unfinished.
-Large empty background.`
+import pg from 'pg'
+
+const { Pool } = pg
 
 const createJsonResponse = (res, statusCode, payload) =>
   res.status(statusCode).json(payload)
+
+const pool = new Pool({
+  connectionString: process.env.NEON_DATABASE_URL,
+})
+
+const getStylePrompt = async () => {
+  const result = await pool.query(
+    "SELECT content FROM prompts WHERE name = 'style_prompt' LIMIT 1"
+  )
+
+  return result.rows[0]?.content?.trim() ?? null
+}
 
 const getImageUrlFromResponse = (data) => {
   const message = data?.choices?.[0]?.message
@@ -39,6 +46,10 @@ export default async function handler(req, res) {
     return createJsonResponse(res, 500, { error: 'Server configuration error' })
   }
 
+  if (!process.env.NEON_DATABASE_URL) {
+    return createJsonResponse(res, 500, { error: 'Missing NEON_DATABASE_URL configuration' })
+  }
+
   const payload = req.body ?? {}
   const expandedPrompt = payload.expandedPrompt?.trim()
 
@@ -46,9 +57,17 @@ export default async function handler(req, res) {
     return createJsonResponse(res, 400, { error: 'Field expandedPrompt is required' })
   }
 
-  const prompt = `${expandedPrompt}\n\n${STYLE_PROMPT}`
-
   try {
+    const stylePrompt = await getStylePrompt()
+
+    if (!stylePrompt) {
+      return createJsonResponse(res, 500, {
+        error: "Missing prompt content for name 'style_prompt' in prompts table",
+      })
+    }
+
+    const prompt = `${expandedPrompt}\n\n${stylePrompt}`
+
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
