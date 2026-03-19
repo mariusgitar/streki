@@ -1,3 +1,11 @@
 {
+  "headers": [
+    {
+      "source": "/(.*).lottie",
+      "headers": [
+        { "key": "Content-Type", "value": "application/zip" }
+      ]
+    }
+  ],
   "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
 }
