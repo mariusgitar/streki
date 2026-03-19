@@ -19,13 +19,8 @@ only — what is happening, who is there, and the setting. Be
 concise but vivid. Do not describe any art style. Return only
 the expanded description, no explanations or extra text.`
 
-const createJsonResponse = (statusCode, payload) => ({
-  statusCode,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(payload),
-})
+const createJsonResponse = (res, statusCode, payload) =>
+  res.status(statusCode).json(payload)
 
 const createTables = async (client) => {
   await client.query(`
@@ -65,15 +60,15 @@ const seedPrompts = async (client) => {
   )
 }
 
-export async function handler(event) {
-  if (event.httpMethod !== 'POST') {
-    return createJsonResponse(405, { error: 'Method Not Allowed' })
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return createJsonResponse(res, 405, { error: 'Method Not Allowed' })
   }
 
   const connectionString = process.env.NEON_DATABASE_URL
 
   if (!connectionString) {
-    return createJsonResponse(500, { error: 'Server configuration error' })
+    return createJsonResponse(res, 500, { error: 'Server configuration error' })
   }
 
   const client = new Client({
@@ -90,7 +85,7 @@ export async function handler(event) {
     await seedPrompts(client)
     await client.query('COMMIT')
 
-    return createJsonResponse(200, { ok: true })
+    return createJsonResponse(res, 200, { ok: true })
   } catch (error) {
     console.error('Error initializing database:', error)
 
@@ -100,7 +95,7 @@ export async function handler(event) {
       console.error('Error rolling back database initialization:', rollbackError)
     }
 
-    return createJsonResponse(500, { error: 'Unable to initialize database' })
+    return createJsonResponse(res, 500, { error: 'Unable to initialize database' })
   } finally {
     try {
       await client.end()

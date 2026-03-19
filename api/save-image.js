@@ -2,13 +2,8 @@ import pg from 'pg'
 
 const { Client } = pg
 
-const createJsonResponse = (statusCode, payload) => ({
-  statusCode,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(payload),
-})
+const createJsonResponse = (res, statusCode, payload) =>
+  res.status(statusCode).json(payload)
 
 const createClient = (connectionString) =>
   new Client({
@@ -18,32 +13,25 @@ const createClient = (connectionString) =>
     },
   })
 
-export async function handler(event) {
-  if (event.httpMethod !== 'POST') {
-    return createJsonResponse(405, { error: 'Method Not Allowed' })
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return createJsonResponse(res, 405, { error: 'Method Not Allowed' })
   }
 
   const connectionString = process.env.NEON_DATABASE_URL
 
   if (!connectionString) {
-    return createJsonResponse(500, { error: 'Server configuration error' })
+    return createJsonResponse(res, 500, { error: 'Server configuration error' })
   }
 
-  let payload
-
-  try {
-    payload = JSON.parse(event.body ?? '{}')
-  } catch {
-    return createJsonResponse(400, { error: 'Invalid JSON body' })
-  }
-
+  const payload = req.body ?? {}
   const motiv = payload.motiv?.trim()
   const scene = payload.scene?.trim()
   const expandedPrompt = payload.expandedPrompt?.trim()
   const imageData = payload.imageData?.trim()
 
   if (!motiv || !scene || !expandedPrompt || !imageData) {
-    return createJsonResponse(400, {
+    return createJsonResponse(res, 400, {
       error: 'Fields motiv, scene, expandedPrompt, and imageData are required',
     })
   }
@@ -64,10 +52,10 @@ export async function handler(event) {
 
     const id = result.rows[0]?.id
 
-    return createJsonResponse(201, { ok: true, id })
+    return createJsonResponse(res, 201, { ok: true, id })
   } catch (error) {
     console.error('Error saving image:', error)
-    return createJsonResponse(500, { error: 'Unable to save image' })
+    return createJsonResponse(res, 500, { error: 'Unable to save image' })
   } finally {
     try {
       await client.end()

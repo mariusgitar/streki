@@ -2,13 +2,8 @@ import pg from 'pg'
 
 const { Client } = pg
 
-const createJsonResponse = (statusCode, payload) => ({
-  statusCode,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  body: JSON.stringify(payload),
-})
+const createJsonResponse = (res, statusCode, payload) =>
+  res.status(statusCode).json(payload)
 
 const createClient = (connectionString) =>
   new Client({
@@ -18,15 +13,15 @@ const createClient = (connectionString) =>
     },
   })
 
-export async function handler(event) {
-  if (event.httpMethod !== 'GET') {
-    return createJsonResponse(405, { error: 'Method Not Allowed' })
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return createJsonResponse(res, 405, { error: 'Method Not Allowed' })
   }
 
   const connectionString = process.env.NEON_DATABASE_URL
 
   if (!connectionString) {
-    return createJsonResponse(500, { error: 'Server configuration error' })
+    return createJsonResponse(res, 500, { error: 'Server configuration error' })
   }
 
   const client = createClient(connectionString)
@@ -40,10 +35,10 @@ export async function handler(event) {
       ORDER BY name ASC
     `)
 
-    return createJsonResponse(200, { prompts: result.rows })
+    return createJsonResponse(res, 200, { prompts: result.rows })
   } catch (error) {
     console.error('Error fetching prompts:', error)
-    return createJsonResponse(500, { error: 'Unable to fetch prompts' })
+    return createJsonResponse(res, 500, { error: 'Unable to fetch prompts' })
   } finally {
     try {
       await client.end()
