@@ -112,7 +112,6 @@ export async function saveImage({ motiv, scene, expandedPrompt, imageData }) {
   }
 }
 
-
 /**
  * Henter lagrede bilder fra bildebanken.
  *
@@ -143,4 +142,110 @@ export async function getImages() {
   }
 
   return data.images
+}
+
+/**
+ * Henter alle lagrede prompts.
+ *
+ * @returns {Promise<Array>} Liste over prompt-objekter.
+ * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig promptliste.
+ */
+export async function getPrompts() {
+  const response = await fetch('/.netlify/functions/get-prompts', {
+    method: 'GET',
+  })
+
+  let data = null
+
+  try {
+    data = await response.json()
+  } catch {
+    if (!response.ok) {
+      throw new Error('Kunne ikke hente prompts på grunn av en ugyldig serverrespons.')
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'Kunne ikke hente prompts. Prøv igjen.')
+  }
+
+  if (!Array.isArray(data?.prompts)) {
+    throw new Error('Serveren returnerte ingen gyldig promptliste.')
+  }
+
+  return data.prompts
+}
+
+/**
+ * Oppdaterer en navngitt prompt.
+ *
+ * @param {{ name: string, content: string }} params - Promptnavn og nytt innhold.
+ * @returns {Promise<{ ok: boolean }>} Resultatet fra serveren.
+ * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig respons.
+ */
+export async function updatePrompt({ name, content }) {
+  const response = await fetch('/.netlify/functions/update-prompt', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ name, content }),
+  })
+
+  let data = null
+
+  try {
+    data = await response.json()
+  } catch {
+    if (!response.ok) {
+      throw new Error('Kunne ikke lagre prompten på grunn av en ugyldig serverrespons.')
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'Kunne ikke lagre prompten. Prøv igjen.')
+  }
+
+  if (data?.ok !== true) {
+    throw new Error('Serveren returnerte ikke en gyldig lagringsbekreftelse.')
+  }
+
+  return { ok: data.ok }
+}
+
+/**
+ * Sletter et lagret bilde.
+ *
+ * @param {{ id: string | number }} params - ID-en til bildet som skal slettes.
+ * @returns {Promise<{ ok: boolean }>} Resultatet fra serveren.
+ * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig respons.
+ */
+export async function deleteImage({ id }) {
+  const response = await fetch('/.netlify/functions/delete-image', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ id }),
+  })
+
+  let data = null
+
+  try {
+    data = await response.json()
+  } catch {
+    if (!response.ok) {
+      throw new Error('Kunne ikke slette bildet på grunn av en ugyldig serverrespons.')
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'Kunne ikke slette bildet. Prøv igjen.')
+  }
+
+  if (data?.ok !== true) {
+    throw new Error('Serveren returnerte ikke en gyldig slettebekreftelse.')
+  }
+
+  return { ok: data.ok }
 }
