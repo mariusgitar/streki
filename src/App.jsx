@@ -4,6 +4,7 @@ import AdminPage from './components/AdminPage'
 import ImageGallery from './components/ImageGallery'
 import SearchBar from './components/SearchBar'
 import PromptForm from './components/PromptForm'
+import GeneratingAnimation from './components/GeneratingAnimation'
 import { expandPrompt, generateImage, getImages, saveImage } from './utils/apiUtils'
 
 const getBase64ImageData = (imageUrl) => {
@@ -102,9 +103,8 @@ function HomePage() {
       <div className="w-full max-w-3xl text-center">
         <h1 className="text-4xl font-bold text-slate-900">StreKI</h1>
         <p className="mt-3 text-lg text-slate-600">Beskriv hva du vil illustrere</p>
-        <PromptForm onSubmit={handleSubmit} />
+        {isLoading ? <GeneratingAnimation /> : <PromptForm onSubmit={handleSubmit} />}
 
-        {isLoading ? <p className="mt-6 text-slate-700">Lager illustrasjon...</p> : null}
         {errorMessage ? <p className="mt-6 text-red-600">{errorMessage}</p> : null}
         {imageUrl ? (
           <div className="mt-8">
