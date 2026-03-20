@@ -28,11 +28,11 @@ export default async function handler(req, res) {
   const motiv = payload.motiv?.trim()
   const scene = payload.scene?.trim()
   const expandedPrompt = payload.expandedPrompt?.trim()
-  const imageData = payload.imageData?.trim()
+  const imageUrl = payload.imageUrl?.trim()
 
-  if (!motiv || !scene || !expandedPrompt || !imageData) {
+  if (!motiv || !scene || !expandedPrompt || !imageUrl) {
     return createJsonResponse(res, 400, {
-      error: 'Fields motiv, scene, expandedPrompt, and imageData are required',
+      error: 'Fields motiv, scene, expandedPrompt, and imageUrl are required',
     })
   }
 
@@ -40,6 +40,15 @@ export default async function handler(req, res) {
 
   try {
     await client.connect()
+
+    const imageResponse = await fetch(imageUrl)
+
+    if (!imageResponse.ok) {
+      throw new Error(`Unable to fetch image: ${imageResponse.status}`)
+    }
+
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
+    const imageData = imageBuffer.toString('base64')
 
     const result = await client.query(
       `
