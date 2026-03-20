@@ -75,17 +75,17 @@ export async function generateImage({ expandedPrompt }) {
 /**
  * Lagrer et generert bilde i bildebanken.
  *
- * @param {{ motiv: string, scene: string, expandedPrompt: string, imageData: string }} params - Feltene som skal lagres.
+ * @param {{ motiv: string, scene: string, expandedPrompt: string, imageUrl: string }} params - Feltene som skal lagres.
  * @returns {Promise<{ ok: boolean, id: string | number }>} Resultatet fra serveren.
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig respons.
  */
-export async function saveImage({ motiv, scene, expandedPrompt, imageData }) {
+export async function saveImage({ motiv, scene, expandedPrompt, imageUrl }) {
   const response = await fetch('/api/save-image', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ motiv, scene, expandedPrompt, imageData }),
+    body: JSON.stringify({ motiv, scene, expandedPrompt, imageUrl }),
   })
 
   let data = null

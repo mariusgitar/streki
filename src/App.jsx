@@ -7,21 +7,6 @@ import PromptForm from './components/PromptForm'
 import GeneratingAnimation from './components/GeneratingAnimation'
 import { expandPrompt, generateImage, getImages, saveImage } from './utils/apiUtils'
 
-const getBase64ImageData = (imageUrl) => {
-  if (typeof imageUrl !== 'string') {
-    return ''
-  }
-
-  const dataUrlPrefix = 'base64,'
-  const base64Index = imageUrl.indexOf(dataUrlPrefix)
-
-  if (base64Index === -1) {
-    return imageUrl
-  }
-
-  return imageUrl.slice(base64Index + dataUrlPrefix.length)
-}
-
 function HomePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
@@ -29,7 +14,6 @@ function HomePage() {
   const [motiv, setMotiv] = useState('')
   const [scene, setScene] = useState('')
   const [expandedPrompt, setExpandedPrompt] = useState('')
-  const [imageData, setImageData] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveErrorMessage, setSaveErrorMessage] = useState('')
   const [isSaved, setIsSaved] = useState(false)
@@ -58,7 +42,6 @@ function HomePage() {
     setMotiv(motiv)
     setScene(scene)
     setExpandedPrompt('')
-    setImageData('')
     setIsSaving(false)
     setSaveErrorMessage('')
     setIsSaved(false)
@@ -66,12 +49,8 @@ function HomePage() {
     try {
       const nextExpandedPrompt = await expandPrompt({ motiv, scene })
       const nextImageUrl = await generateImage({ expandedPrompt: nextExpandedPrompt })
-      const nextImageData = getBase64ImageData(nextImageUrl)
-
       setExpandedPrompt(nextExpandedPrompt)
       setImageUrl(nextImageUrl)
-      setImageData(nextImageData)
-
       if (!skipSave) {
         setIsSaving(true)
 
@@ -80,7 +59,7 @@ function HomePage() {
             motiv,
             scene,
             expandedPrompt: nextExpandedPrompt,
-            imageData: nextImageData,
+            imageUrl: nextImageUrl,
           })
 
           setIsSaved(true)
