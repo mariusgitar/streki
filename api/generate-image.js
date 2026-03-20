@@ -65,7 +65,7 @@ export default async function handler(req, res) {
         prompt,
         loras: [
           {
-            path: 'https://v3b.fal.media/files/b/0a92e984/0Vyp4Z-SZOz7Hk83YwYvC_pytorch_lora_weights.safetensors',
+            path: 'https://v3b.fal.media/files/b/0a92f6b4/w2gYtQzWFVB1EPqbhdz69_pytorch_lora_weights.safetensors',
             scale: 1.0,
           },
         ],
