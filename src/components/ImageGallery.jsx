@@ -12,6 +12,8 @@ const getImageSrc = (imageData) => {
   return `data:image/png;base64,${imageData}`
 }
 
+const getBeskrivelse = (image) => String(image?.motiv ?? '').trim()
+
 const matchesSearchQuery = (image, searchQuery) => {
   if (!searchQuery) {
     return true
@@ -23,9 +25,7 @@ const matchesSearchQuery = (image, searchQuery) => {
     return true
   }
 
-  return [image.motiv, image.scene].some((value) =>
-    String(value ?? '').toLowerCase().includes(normalizedSearchQuery)
-  )
+  return getBeskrivelse(image).toLowerCase().includes(normalizedSearchQuery)
 }
 
 const getResultLabel = (filteredCount, totalCount) => {
@@ -53,13 +53,16 @@ function ImageGallery({ images, searchQuery = '' }) {
         </p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredImages.map((image) => (
-            <article key={image.id}>
-              <img src={getImageSrc(image.image_data)} alt={`${image.motiv} - ${image.scene}`} className="w-full" />
-              <p>{image.motiv}</p>
-              <p>{image.scene}</p>
-            </article>
-          ))}
+          {filteredImages.map((image) => {
+            const beskrivelse = getBeskrivelse(image)
+
+            return (
+              <article key={image.id}>
+                <img src={getImageSrc(image.image_data)} alt={beskrivelse || 'Lagret illustrasjon'} className="w-full" />
+                <p>{beskrivelse}</p>
+              </article>
+            )
+          })}
         </div>
       )}
     </section>

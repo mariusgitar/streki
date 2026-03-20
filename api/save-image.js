@@ -25,14 +25,13 @@ export default async function handler(req, res) {
   }
 
   const payload = req.body ?? {}
-  const motiv = payload.motiv?.trim()
-  const scene = payload.scene?.trim()
+  const beskrivelse = payload.beskrivelse?.trim()
   const expandedPrompt = payload.expandedPrompt?.trim()
   const imageUrl = payload.imageUrl?.trim()
 
-  if (!motiv || !scene || !expandedPrompt || !imageUrl) {
+  if (!beskrivelse || !expandedPrompt || !imageUrl) {
     return createJsonResponse(res, 400, {
-      error: 'Fields motiv, scene, expandedPrompt, and imageUrl are required',
+      error: 'Fields beskrivelse, expandedPrompt, and imageUrl are required',
     })
   }
 
@@ -56,7 +55,7 @@ export default async function handler(req, res) {
         VALUES ($1, $2, $3, $4)
         RETURNING id
       `,
-      [motiv, scene, expandedPrompt, imageData],
+      [beskrivelse, '', expandedPrompt, imageData],
     )
 
     const id = result.rows[0]?.id
