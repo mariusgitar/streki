@@ -17,33 +17,20 @@ const getStylePrompt = async () => {
   return result.rows[0]?.content?.trim() ?? null
 }
 
-const getImageUrlFromResponse = (data) => {
-  const message = data?.choices?.[0]?.message
-
-  if (!message) {
-    return null
-  }
-
-  const imageFromArray = message.images?.[0]
-
-  return (
-    imageFromArray?.image_url?.url ??
-    imageFromArray?.imageUrl?.url ??
-    message.image_url?.url ??
-    message.imageUrl?.url ??
-    null
-  )
-}
+const getImageUrlFromResponse = (data) =>
+  data?.images?.[0]?.url ??
+  data?.data?.images?.[0]?.url ??
+  data?.image?.url ??
+  data?.url ??
+  null
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return createJsonResponse(res, 405, { error: 'Method Not Allowed' })
   }
 
-  const apiKey = process.env.STREKI_OPEN_ROUTER_KEY
-
-  if (!apiKey) {
-    return createJsonResponse(res, 500, { error: 'Server configuration error' })
+  if (!process.env.STREKI_FAL_API_KEY) {
+    return createJsonResponse(res, 500, { error: 'Missing STREKI_FAL_API_KEY configuration' })
   }
 
   if (!process.env.NEON_DATABASE_URL) {
@@ -68,40 +55,46 @@ export default async function handler(req, res) {
 
     const prompt = `${expandedPrompt}\n\n${stylePrompt}`
 
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    const response = await fetch('https://fal.run/fal-ai/flux-2/klein/4b/lora', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${apiKey}`,
+        Authorization: `Key ${process.env.STREKI_FAL_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'black-forest-labs/flux.2-klein-4b',
-        modalities: ['image'],
-        messages: [
+        prompt,
+        loras: [
           {
-            role: 'user',
-            content: prompt,
+            path: 'https://v3b.fal.media/files/b/0a92e984/0Vyp4Z-SZOz7Hk83YwYvC_pytorch_lora_weights.safetensors',
+            scale: 1.0,
           },
         ],
+        image_size: 'square_hd',
+        num_inference_steps: 28,
       }),
     })
 
     const data = await response.json().catch(() => null)
 
     if (!response.ok) {
-      const errorMessage = data?.error?.message ?? 'Failed to generate image'
+      const errorMessage =
+        data?.detail ??
+        data?.error?.message ??
+        data?.error ??
+        'Failed to generate image'
+
       return createJsonResponse(res, response.status, { error: errorMessage })
     }
 
     const imageUrl = getImageUrlFromResponse(data)
 
     if (!imageUrl) {
-      return createJsonResponse(res, 502, { error: 'OpenRouter returned no image URL' })
+      return createJsonResponse(res, 502, { error: 'fal.ai returned no image URL' })
     }
 
     return createJsonResponse(res, 200, { imageUrl })
   } catch (error) {
     console.error('Error generating image:', error)
-    return createJsonResponse(res, 502, { error: 'Unable to reach OpenRouter' })
+    return createJsonResponse(res, 502, { error: 'Unable to reach fal.ai' })
   }
 }
