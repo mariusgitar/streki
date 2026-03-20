@@ -11,8 +11,7 @@ function HomePage() {
   const [isLoading, setIsLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-  const [motiv, setMotiv] = useState('')
-  const [scene, setScene] = useState('')
+  const [beskrivelse, setBeskrivelse] = useState('')
   const [expandedPrompt, setExpandedPrompt] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveErrorMessage, setSaveErrorMessage] = useState('')
@@ -35,19 +34,18 @@ function HomePage() {
     loadImages()
   }, [])
 
-  const handleSubmit = async ({ motiv, scene, skipSave }) => {
+  const handleSubmit = async ({ beskrivelse, skipSave }) => {
     setIsLoading(true)
     setImageUrl('')
     setErrorMessage('')
-    setMotiv(motiv)
-    setScene(scene)
+    setBeskrivelse(beskrivelse)
     setExpandedPrompt('')
     setIsSaving(false)
     setSaveErrorMessage('')
     setIsSaved(false)
 
     try {
-      const nextExpandedPrompt = await expandPrompt({ motiv, scene })
+      const nextExpandedPrompt = await expandPrompt({ beskrivelse })
       const nextImageUrl = await generateImage({ expandedPrompt: nextExpandedPrompt })
       setExpandedPrompt(nextExpandedPrompt)
       setImageUrl(nextImageUrl)
@@ -56,8 +54,7 @@ function HomePage() {
 
         try {
           await saveImage({
-            motiv,
-            scene,
+            beskrivelse,
             expandedPrompt: nextExpandedPrompt,
             imageUrl: nextImageUrl,
           })
@@ -87,7 +84,7 @@ function HomePage() {
         {errorMessage ? <p className="mt-6 text-red-600">{errorMessage}</p> : null}
         {imageUrl ? (
           <div className="mt-8">
-            <img src={imageUrl} alt="Generert illustrasjon" className="mx-auto max-w-full" />
+            <img src={imageUrl} alt={beskrivelse || 'Generert illustrasjon'} className="mx-auto max-w-full" />
             {isSaving ? <p className="mt-4 text-sm text-slate-500">Lagrer i bildebanken...</p> : null}
             {isSaved ? <p className="mt-4 text-sm text-slate-500">Lagret i bildebanken</p> : null}
             {saveErrorMessage ? <p className="mt-4 text-red-600">{saveErrorMessage}</p> : null}

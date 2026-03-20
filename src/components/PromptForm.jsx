@@ -1,8 +1,7 @@
 import React, { useState } from 'react'
 
 function PromptForm({ onSubmit }) {
-  const [motiv, setMotiv] = useState('')
-  const [scene, setScene] = useState('')
+  const [beskrivelse, setBeskrivelse] = useState('')
   const [skipSave, setSkipSave] = useState(false)
   const [errors, setErrors] = useState({})
 
@@ -11,12 +10,8 @@ function PromptForm({ onSubmit }) {
 
     const nextErrors = {}
 
-    if (!motiv.trim()) {
-      nextErrors.motiv = 'Fyll inn motiv.'
-    }
-
-    if (!scene.trim()) {
-      nextErrors.scene = 'Fyll inn scene.'
+    if (!beskrivelse.trim()) {
+      nextErrors.beskrivelse = 'Fyll inn en beskrivelse.'
     }
 
     setErrors(nextErrors)
@@ -25,38 +20,25 @@ function PromptForm({ onSubmit }) {
       return
     }
 
-    onSubmit({ motiv: motiv.trim(), scene: scene.trim(), skipSave })
+    onSubmit({ beskrivelse: beskrivelse.trim(), skipSave })
   }
 
   return (
     <form className="mt-8 w-full max-w-xl space-y-5 text-left" onSubmit={handleSubmit}>
       <div>
-        <label className="mb-2 block text-sm font-medium text-slate-900" htmlFor="motiv">
-          Motiv
-        </label>
-        <input
-          id="motiv"
-          type="text"
-          value={motiv}
-          onChange={(event) => setMotiv(event.target.value)}
-          placeholder="For eksempel en lærer, en hund eller et rådhus"
-          className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
-        />
-        {errors.motiv ? <p className="mt-2 text-sm text-red-600">{errors.motiv}</p> : null}
-      </div>
-
-      <div>
-        <label className="mb-2 block text-sm font-medium text-slate-900" htmlFor="scene">
-          Scene
+        <label className="mb-2 block text-sm font-medium text-slate-900" htmlFor="beskrivelse">
+          Hva vil du jeg skal tegne?
         </label>
         <textarea
-          id="scene"
-          value={scene}
-          onChange={(event) => setScene(event.target.value)}
-          placeholder="Beskriv hva som skjer, hvor motivet er, og hvilken stemning illustrasjonen skal ha"
+          id="beskrivelse"
+          value={beskrivelse}
+          onChange={(event) => setBeskrivelse(event.target.value)}
+          placeholder={`Beskriv gjerne et motiv og en scene, så er det
+lettere for meg å tolke. F.eks: En gutt som spiser havregryn
+alene ved et kjøkkenbord om morgenen.`}
           className="min-h-32 w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
         />
-        {errors.scene ? <p className="mt-2 text-sm text-red-600">{errors.scene}</p> : null}
+        {errors.beskrivelse ? <p className="mt-2 text-sm text-red-600">{errors.beskrivelse}</p> : null}
       </div>
 
       <div>

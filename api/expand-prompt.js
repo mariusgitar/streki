@@ -33,14 +33,13 @@ export default async function handler(req, res) {
   }
 
   const payload = req.body ?? {}
-  const motiv = payload.motiv?.trim()
-  const scene = payload.scene?.trim()
+  const beskrivelse = payload.beskrivelse?.trim()
 
-  if (!motiv || !scene) {
-    return createJsonResponse(res, 400, { error: 'Fields motiv and scene are required' })
+  if (!beskrivelse) {
+    return createJsonResponse(res, 400, { error: 'Field beskrivelse is required' })
   }
 
-  const userPrompt = `Lag et detaljert engelsk bildeprompt basert på\ndette. Motiv: ${motiv}. Scene: ${scene}.`
+  const userPrompt = `Translate and expand this into a detailed English description for an illustration. Description: ${beskrivelse}`
 
   try {
     const systemPrompt = await getSystemPrompt()

@@ -1,17 +1,17 @@
 /**
- * Utvider brukerens motiv og scene til en rik bildegenereringsprompt.
+ * Utvider brukerens beskrivelse til en rik bildegenereringsprompt.
  *
- * @param {{ motiv: string, scene: string }} params - Motivet og scenebeskrivelsen fra brukeren.
+ * @param {{ beskrivelse: string }} params - Beskrivelsen fra brukeren.
  * @returns {Promise<string>} Den utvidede prompten som tekst.
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig prompt.
  */
-export async function expandPrompt({ motiv, scene }) {
+export async function expandPrompt({ beskrivelse }) {
   const response = await fetch('/api/expand-prompt', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ motiv, scene }),
+    body: JSON.stringify({ beskrivelse }),
   })
 
   let data = null
@@ -75,17 +75,17 @@ export async function generateImage({ expandedPrompt }) {
 /**
  * Lagrer et generert bilde i bildebanken.
  *
- * @param {{ motiv: string, scene: string, expandedPrompt: string, imageUrl: string }} params - Feltene som skal lagres.
+ * @param {{ beskrivelse: string, expandedPrompt: string, imageUrl: string }} params - Feltene som skal lagres.
  * @returns {Promise<{ ok: boolean, id: string | number }>} Resultatet fra serveren.
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig respons.
  */
-export async function saveImage({ motiv, scene, expandedPrompt, imageUrl }) {
+export async function saveImage({ beskrivelse, expandedPrompt, imageUrl }) {
   const response = await fetch('/api/save-image', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ motiv, scene, expandedPrompt, imageUrl }),
+    body: JSON.stringify({ beskrivelse, expandedPrompt, imageUrl }),
   })
 
   let data = null
