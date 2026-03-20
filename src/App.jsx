@@ -5,6 +5,7 @@ import ImageGallery from './components/ImageGallery'
 import SearchBar from './components/SearchBar'
 import PromptForm from './components/PromptForm'
 import GeneratingAnimation from './components/GeneratingAnimation'
+import PasswordGate from './components/PasswordGate'
 import { expandPrompt, generateImage, getImages, saveImage } from './utils/apiUtils'
 
 function HomePage() {
@@ -108,6 +109,22 @@ function HomePage() {
 }
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [hasCheckedSession, setHasCheckedSession] = useState(false)
+
+  useEffect(() => {
+    setIsAuthenticated(sessionStorage.getItem('authenticated') === 'authenticated')
+    setHasCheckedSession(true)
+  }, [])
+
+  if (!hasCheckedSession) {
+    return null
+  }
+
+  if (!isAuthenticated) {
+    return <PasswordGate onAuthenticated={() => setIsAuthenticated(true)} />
+  }
+
   return (
     <BrowserRouter>
       <Routes>
