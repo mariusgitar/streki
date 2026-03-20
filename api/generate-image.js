@@ -55,7 +55,7 @@ export default async function handler(req, res) {
 
     const prompt = `${expandedPrompt}\n\n${stylePrompt}`
 
-    const response = await fetch('https://fal.run/fal-ai/lora', {
+    const response = await fetch('https://fal.run/fal-ai/flux-lora', {
       method: 'POST',
       headers: {
         Authorization: `Key ${process.env.STREKI_FAL_API_KEY}`,
