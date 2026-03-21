@@ -180,17 +180,17 @@ export async function getConvertModes() {
 /**
  * Konverterer et opplastet bilde til en tegning.
  *
- * @param {{ imageBase64: string, modeContent: string, modeStrength: number, ekstraInstruksjon?: string }} params - Data for konverteringen.
+ * @param {{ imageBase64: string, modeContent: string, modeStrength: number }} params - Data for konverteringen.
  * @returns {Promise<string>} URL-en til det konverterte bildet.
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig bilde-URL.
  */
-export async function convertImage({ imageBase64, modeContent, modeStrength, ekstraInstruksjon }) {
+export async function convertImage({ imageBase64, modeContent, modeStrength }) {
   const response = await fetch('/api/convert-image', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ imageBase64, modeContent, modeStrength, ekstraInstruksjon }),
+    body: JSON.stringify({ imageBase64, modeContent, modeStrength }),
   })
 
   let data = null
