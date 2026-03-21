@@ -98,7 +98,7 @@ function HomePage() {
     }
   }
 
-  const handleConvertSubmit = async ({ file, modeName, modeContent, modeStrength, ekstraInstruksjon }) => {
+  const handleConvertSubmit = async ({ file, modeName, modeContent, modeStrength }) => {
     setIsLoading(true)
     resetResultState()
     const nextBeskrivelse = `Konvertert: ${modeName}`
@@ -106,15 +106,10 @@ function HomePage() {
 
     try {
       const imageBase64 = await fileToDataUrl(file)
-      const shouldExpandExtraInstruction = modeName === 'convert_expand' && ekstraInstruksjon?.trim()
-      const nextEkstraInstruksjon = shouldExpandExtraInstruction
-        ? await expandPrompt({ beskrivelse: ekstraInstruksjon, mode: 'expand' })
-        : ekstraInstruksjon
       const nextImageUrl = await convertImage({
         imageBase64,
         modeContent,
         modeStrength,
-        ekstraInstruksjon: nextEkstraInstruksjon,
       })
       const nextExpandedPrompt = `${modeContent}`
 
