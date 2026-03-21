@@ -78,7 +78,7 @@ export default async function handler(req, res) {
       hasImageUrl: !!dataUri,
     }))
 
-    const result = await fal.subscribe('fal-ai/flux-2/klein/4b/lora', {
+    const result = await fal.subscribe('fal-ai/flux-2/klein/4b/base/edit/lora', {
       input: {
         prompt: fullPrompt,
         image_urls: [dataUri],
