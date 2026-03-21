@@ -137,19 +137,21 @@ function ImageConverter({ onSubmit }) {
                 </select>
               </div>
 
-              <div>
-                <label htmlFor="ekstra-instruksjon" className="mb-2 block text-sm font-medium text-slate-900">
-                  Vil du legge til eller endre noe? (valgfritt)
-                </label>
-                <textarea
-                  id="ekstra-instruksjon"
-                  value={ekstraInstruksjon}
-                  onChange={(event) => setEkstraInstruksjon(event.target.value)}
-                  rows={3}
-                  placeholder={"F.eks: legg til en person som sitter ved bordet,\neller utvid scenen med flere steg til høyre"}
-                  className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 resize-none"
-                />
-              </div>
+              {selectedMode?.name === 'convert_expand' ? (
+                <div>
+                  <label htmlFor="ekstra-instruksjon" className="mb-2 block text-sm font-medium text-slate-900">
+                    Vil du legge til eller endre noe? (valgfritt)
+                  </label>
+                  <textarea
+                    id="ekstra-instruksjon"
+                    value={ekstraInstruksjon}
+                    onChange={(event) => setEkstraInstruksjon(event.target.value)}
+                    rows={3}
+                    placeholder={"F.eks: legg til en person som sitter ved bordet,\neller utvid scenen med flere steg til høyre"}
+                    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200 resize-none"
+                  />
+                </div>
+              ) : null}
 
               <div className="flex flex-wrap gap-3">
                 <button
