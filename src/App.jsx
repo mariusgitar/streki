@@ -39,6 +39,7 @@ function HomePage() {
   const [images, setImages] = useState([])
   const [galleryErrorMessage, setGalleryErrorMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
+  const [galleryFilter, setGalleryFilter] = useState('all')
 
   const loadImages = async () => {
     try {
@@ -184,8 +185,14 @@ function HomePage() {
         ) : null}
 
         {galleryErrorMessage ? <p className="mt-8 text-red-600">{galleryErrorMessage}</p> : null}
-        <SearchBar query={searchQuery} onSearch={setSearchQuery} />
-        <ImageGallery images={images} searchQuery={searchQuery} />
+        <ImageGallery images={images} searchQuery={searchQuery} filter={galleryFilter}>
+          <SearchBar
+            query={searchQuery}
+            onSearch={setSearchQuery}
+            filter={galleryFilter}
+            onFilterChange={setGalleryFilter}
+          />
+        </ImageGallery>
         <div className="mt-10 text-center">
           <Link
             to="/admin"
