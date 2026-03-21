@@ -71,7 +71,7 @@ export default async function handler(req, res) {
       hasImageUrl: !!imageUrl,
     }))
 
-    const response = await fetch('https://fal.run/fal-ai/flux-lora', {
+    const response = await fetch('https://fal.run/fal-ai/flux-2/klein/4b/lora', {
       method: 'POST',
       headers: {
         Authorization: `Key ${process.env.STREKI_FAL_API_KEY}`,
@@ -87,6 +87,7 @@ export default async function handler(req, res) {
             scale: 1.0,
           },
         ],
+        num_inference_steps: 8,
       }),
     })
 
