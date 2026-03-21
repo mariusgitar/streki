@@ -144,6 +144,76 @@ export async function getImages() {
   return data.images
 }
 
+
+/**
+ * Henter konverteringsmoduser for bildeopplasting.
+ *
+ * @returns {Promise<Array>} Liste over konverteringsmoduser.
+ * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig respons.
+ */
+export async function getConvertModes() {
+  const response = await fetch('/api/get-convert-modes', {
+    method: 'GET',
+  })
+
+  let data = null
+
+  try {
+    data = await response.json()
+  } catch {
+    if (!response.ok) {
+      throw new Error('Kunne ikke hente konverteringsmoduser på grunn av en ugyldig serverrespons.')
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'Kunne ikke hente konverteringsmoduser. Prøv igjen.')
+  }
+
+  if (!Array.isArray(data?.modes)) {
+    throw new Error('Serveren returnerte ingen gyldig liste med konverteringsmoduser.')
+  }
+
+  return data.modes
+}
+
+/**
+ * Konverterer et opplastet bilde til en tegning.
+ *
+ * @param {{ imageBase64: string, modeContent: string, modeStrength: number }} params - Data for konverteringen.
+ * @returns {Promise<string>} URL-en til det konverterte bildet.
+ * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig bilde-URL.
+ */
+export async function convertImage({ imageBase64, modeContent, modeStrength }) {
+  const response = await fetch('/api/convert-image', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ imageBase64, modeContent, modeStrength }),
+  })
+
+  let data = null
+
+  try {
+    data = await response.json()
+  } catch {
+    if (!response.ok) {
+      throw new Error('Kunne ikke konvertere bildet på grunn av en ugyldig serverrespons.')
+    }
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.error || 'Kunne ikke konvertere bildet. Prøv igjen.')
+  }
+
+  if (!data?.imageUrl || typeof data.imageUrl !== 'string') {
+    throw new Error('Serveren returnerte ingen gyldig bildeadresse.')
+  }
+
+  return data.imageUrl
+}
+
 /**
  * Henter alle lagrede prompts.
  *
