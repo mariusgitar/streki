@@ -33,6 +33,7 @@ export default async function handler(req, res) {
     imageBase64Length: req.body?.imageBase64?.length,
     modeContent: req.body?.modeContent,
     modeStrength: req.body?.modeStrength,
+    ekstraInstruksjon: req.body?.ekstraInstruksjon,
   }))
 
   if (req.method !== 'POST') {
@@ -51,6 +52,7 @@ export default async function handler(req, res) {
   const imageBase64 = payload.imageBase64?.trim()
   const modeContent = payload.modeContent?.trim()
   const modeStrength = Number(payload.modeStrength)
+  const ekstraInstruksjon = payload.ekstraInstruksjon?.trim()
 
   if (!imageBase64 || !modeContent || Number.isNaN(modeStrength)) {
     return createJsonResponse(res, 400, {
@@ -67,7 +69,9 @@ export default async function handler(req, res) {
       })
     }
 
-    const fullPrompt = `${modeContent}\n\n${stylePrompt}`
+    const fullPrompt = ekstraInstruksjon
+      ? `${modeContent}\n\n${stylePrompt}\n\nAdditional instruction: ${ekstraInstruksjon}`
+      : `${modeContent}\n\n${stylePrompt}`
     const dataUri = imageBase64.startsWith('data:')
       ? imageBase64
       : `data:image/jpeg;base64,${imageBase64}`
