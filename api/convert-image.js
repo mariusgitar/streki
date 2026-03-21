@@ -22,6 +22,53 @@ const getImageUrlFromResponse = (data) =>
   data?.url ??
   null
 
+const parseBase64Image = (imageBase64) => {
+  const matches = imageBase64.match(/^data:(.+?);base64,(.+)$/)
+  const mimeType = matches?.[1] ?? 'image/jpeg'
+  const base64Content = matches?.[2] ?? imageBase64
+  const extension = mimeType.split('/')[1] ?? 'jpg'
+
+  return {
+    buffer: Buffer.from(base64Content, 'base64'),
+    mimeType,
+    filename: `image.${extension}`,
+  }
+}
+
+const uploadImageToFalStorage = async (imageBase64) => {
+  const { buffer, mimeType, filename } = parseBase64Image(imageBase64)
+  const formData = new FormData()
+  const blob = new Blob([buffer], { type: mimeType })
+
+  formData.append('file', blob, filename)
+
+  const uploadResponse = await fetch('https://fal.run/storage/upload', {
+    method: 'POST',
+    headers: {
+      Authorization: `Key ${process.env.STREKI_FAL_API_KEY}`,
+    },
+    body: formData,
+  })
+
+  const uploadData = await uploadResponse.json().catch(() => null)
+
+  if (!uploadResponse.ok) {
+    const errorMessage =
+      uploadData?.detail ??
+      uploadData?.error?.message ??
+      uploadData?.error ??
+      'Failed to upload image to fal.ai storage'
+
+    throw new Error(errorMessage)
+  }
+
+  if (!uploadData?.url) {
+    throw new Error('fal.ai storage upload returned no URL')
+  }
+
+  return uploadData.url
+}
+
 export default async function handler(req, res) {
   console.log('convert-image body:', JSON.stringify({
     hasImageBase64: !!req.body?.imageBase64,
@@ -63,7 +110,7 @@ export default async function handler(req, res) {
     }
 
     const fullPrompt = `${modeContent}\n\n${stylePrompt}`
-    const imageUrl = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`
+    const imageUrl = await uploadImageToFalStorage(imageBase64)
 
     console.log('fal.ai request:', JSON.stringify({
       prompt: fullPrompt?.substring(0, 100),
@@ -92,6 +139,8 @@ export default async function handler(req, res) {
     })
 
     const data = await response.json().catch(() => null)
+
+    console.log('fal.ai full response:', JSON.stringify(data))
 
     if (!response.ok) {
       const errorMessage =
