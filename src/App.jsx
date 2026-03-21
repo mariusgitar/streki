@@ -6,9 +6,28 @@ import SearchBar from './components/SearchBar'
 import PromptForm from './components/PromptForm'
 import GeneratingAnimation from './components/GeneratingAnimation'
 import PasswordGate from './components/PasswordGate'
-import { expandPrompt, generateImage, getImages, saveImage } from './utils/apiUtils'
+import ImageConverter from './components/ImageConverter'
+import { convertImage, expandPrompt, generateImage, getImages, saveImage } from './utils/apiUtils'
+
+const fileToDataUrl = (file) =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader()
+
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result)
+        return
+      }
+
+      reject(new Error('Kunne ikke lese bildefilen.'))
+    }
+
+    reader.onerror = () => reject(new Error('Kunne ikke lese bildefilen.'))
+    reader.readAsDataURL(file)
+  })
 
 function HomePage() {
+  const [activeTab, setActiveTab] = useState('describe')
   const [isLoading, setIsLoading] = useState(false)
   const [imageUrl, setImageUrl] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
@@ -35,15 +54,19 @@ function HomePage() {
     loadImages()
   }, [])
 
-  const handleSubmit = async ({ beskrivelse, skipSave }) => {
-    setIsLoading(true)
+  const resetResultState = () => {
     setImageUrl('')
     setErrorMessage('')
-    setBeskrivelse(beskrivelse)
     setExpandedPrompt('')
     setIsSaving(false)
     setSaveErrorMessage('')
     setIsSaved(false)
+  }
+
+  const handleSubmit = async ({ beskrivelse, skipSave }) => {
+    setIsLoading(true)
+    resetResultState()
+    setBeskrivelse(beskrivelse)
 
     try {
       const nextExpandedPrompt = await expandPrompt({ beskrivelse })
@@ -75,12 +98,76 @@ function HomePage() {
     }
   }
 
+  const handleConvertSubmit = async ({ file, modeName, modeContent, modeStrength }) => {
+    setIsLoading(true)
+    resetResultState()
+    const nextBeskrivelse = `Konvertert: ${modeName}`
+    setBeskrivelse(nextBeskrivelse)
+
+    try {
+      const imageBase64 = await fileToDataUrl(file)
+      const nextImageUrl = await convertImage({ imageBase64, modeContent, modeStrength })
+      const nextExpandedPrompt = `${modeContent}`
+
+      setExpandedPrompt(nextExpandedPrompt)
+      setImageUrl(nextImageUrl)
+      setIsSaving(true)
+
+      try {
+        await saveImage({
+          beskrivelse: nextBeskrivelse,
+          expandedPrompt: nextExpandedPrompt,
+          imageUrl: nextImageUrl,
+        })
+
+        setIsSaved(true)
+        await loadImages()
+      } catch (error) {
+        setSaveErrorMessage(error instanceof Error ? error.message : 'Noe gikk galt ved lagring. Prøv igjen.')
+      } finally {
+        setIsSaving(false)
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Noe gikk galt. Prøv igjen.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-white px-6 py-12">
       <div className="w-full max-w-3xl text-center">
         <h1 className="text-4xl font-bold text-slate-900">StreKI</h1>
-        <p className="mt-3 text-lg text-slate-600">Beskriv hva du vil illustrere</p>
-        {isLoading ? <GeneratingAnimation /> : <PromptForm onSubmit={handleSubmit} />}
+        <p className="mt-3 text-lg text-slate-600">Lag illustrasjon fra tekst eller konverter et opplastet bilde</p>
+
+        <div className="mt-8 inline-flex rounded-xl bg-slate-100 p-1">
+          <button
+            type="button"
+            onClick={() => setActiveTab('describe')}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              activeTab === 'describe' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Beskriv
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('upload')}
+            className={`rounded-lg px-4 py-2 text-sm font-semibold transition ${
+              activeTab === 'upload' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Last opp bilde
+          </button>
+        </div>
+
+        {isLoading ? (
+          <GeneratingAnimation />
+        ) : activeTab === 'describe' ? (
+          <PromptForm onSubmit={handleSubmit} />
+        ) : (
+          <ImageConverter onSubmit={handleConvertSubmit} />
+        )}
 
         {errorMessage ? <p className="mt-6 text-red-600">{errorMessage}</p> : null}
         {imageUrl ? (
