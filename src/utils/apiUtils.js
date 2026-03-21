@@ -249,17 +249,17 @@ export async function getPrompts() {
 /**
  * Oppdaterer en navngitt prompt.
  *
- * @param {{ name: string, content: string }} params - Promptnavn og nytt innhold.
+ * @param {{ name: string, content: string, strength?: number | null }} params - Promptnavn, nytt innhold og eventuelt strength.
  * @returns {Promise<{ ok: boolean }>} Resultatet fra serveren.
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig respons.
  */
-export async function updatePrompt({ name, content }) {
+export async function updatePrompt({ name, content, strength = null }) {
   const response = await fetch('/api/update-prompt', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ name, content }),
+    body: JSON.stringify({ name, content, strength }),
   })
 
   let data = null
