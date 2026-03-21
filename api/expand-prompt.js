@@ -9,12 +9,14 @@ const pool = new Pool({
   connectionString: process.env.NEON_DATABASE_URL,
 })
 
-const getSystemPrompt = async () => {
-  const result = await pool.query(
-    "SELECT content FROM prompts WHERE name = 'system_prompt' LIMIT 1"
-  )
+const getSystemPrompt = async (mode) => {
+  const promptName = mode === 'expand' ? 'system_prompt_expand' : 'system_prompt'
+  const result = await pool.query('SELECT content FROM prompts WHERE name = $1 LIMIT 1', [promptName])
 
-  return result.rows[0]?.content?.trim() ?? null
+  return {
+    promptName,
+    content: result.rows[0]?.content?.trim() ?? null,
+  }
 }
 
 export default async function handler(req, res) {
@@ -34,6 +36,7 @@ export default async function handler(req, res) {
 
   const payload = req.body ?? {}
   const beskrivelse = payload.beskrivelse?.trim()
+  const mode = typeof payload.mode === 'string' ? payload.mode.trim() : ''
 
   if (!beskrivelse) {
     return createJsonResponse(res, 400, { error: 'Field beskrivelse is required' })
@@ -42,11 +45,11 @@ export default async function handler(req, res) {
   const userPrompt = `Translate and expand this into a detailed English description for an illustration. Description: ${beskrivelse}`
 
   try {
-    const systemPrompt = await getSystemPrompt()
+    const { promptName, content: systemPrompt } = await getSystemPrompt(mode)
 
     if (!systemPrompt) {
       return createJsonResponse(res, 500, {
-        error: "Missing prompt content for name 'system_prompt' in prompts table",
+        error: `Missing prompt content for name '${promptName}' in prompts table`,
       })
     }
 

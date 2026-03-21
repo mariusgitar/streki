@@ -1,17 +1,17 @@
 /**
  * Utvider brukerens beskrivelse til en rik bildegenereringsprompt.
  *
- * @param {{ beskrivelse: string }} params - Beskrivelsen fra brukeren.
+ * @param {{ beskrivelse: string, mode?: string }} params - Beskrivelsen fra brukeren.
  * @returns {Promise<string>} Den utvidede prompten som tekst.
  * @throws {Error} Hvis forespørselen feiler eller serveren ikke returnerer en gyldig prompt.
  */
-export async function expandPrompt({ beskrivelse }) {
+export async function expandPrompt({ beskrivelse, mode }) {
   const response = await fetch('/api/expand-prompt', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ beskrivelse }),
+    body: JSON.stringify({ beskrivelse, mode }),
   })
 
   let data = null
