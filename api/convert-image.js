@@ -1,3 +1,4 @@
+import { fal } from '@fal-ai/client'
 import pg from 'pg'
 
 const { Pool } = pg
@@ -7,6 +8,10 @@ const createJsonResponse = (res, statusCode, payload) =>
 
 const pool = new Pool({
   connectionString: process.env.NEON_DATABASE_URL,
+})
+
+fal.config({
+  credentials: process.env.STREKI_FAL_API_KEY,
 })
 
 const getStylePrompt = async () => {
@@ -21,53 +26,6 @@ const getImageUrlFromResponse = (data) =>
   data?.image?.url ??
   data?.url ??
   null
-
-const parseBase64Image = (imageBase64) => {
-  const matches = imageBase64.match(/^data:(.+?);base64,(.+)$/)
-  const mimeType = matches?.[1] ?? 'image/jpeg'
-  const base64Content = matches?.[2] ?? imageBase64
-  const extension = mimeType.split('/')[1] ?? 'jpg'
-
-  return {
-    buffer: Buffer.from(base64Content, 'base64'),
-    mimeType,
-    filename: `image.${extension}`,
-  }
-}
-
-const uploadImageToFalStorage = async (imageBase64) => {
-  const { buffer, mimeType, filename } = parseBase64Image(imageBase64)
-  const formData = new FormData()
-  const blob = new Blob([buffer], { type: mimeType })
-
-  formData.append('file', blob, filename)
-
-  const uploadResponse = await fetch('https://fal.run/storage/upload', {
-    method: 'POST',
-    headers: {
-      Authorization: `Key ${process.env.STREKI_FAL_API_KEY}`,
-    },
-    body: formData,
-  })
-
-  const uploadData = await uploadResponse.json().catch(() => null)
-
-  if (!uploadResponse.ok) {
-    const errorMessage =
-      uploadData?.detail ??
-      uploadData?.error?.message ??
-      uploadData?.error ??
-      'Failed to upload image to fal.ai storage'
-
-    throw new Error(errorMessage)
-  }
-
-  if (!uploadData?.url) {
-    throw new Error('fal.ai storage upload returned no URL')
-  }
-
-  return uploadData.url
-}
 
 export default async function handler(req, res) {
   console.log('convert-image body:', JSON.stringify({
@@ -110,23 +68,20 @@ export default async function handler(req, res) {
     }
 
     const fullPrompt = `${modeContent}\n\n${stylePrompt}`
-    const imageUrl = await uploadImageToFalStorage(imageBase64)
+    const dataUri = imageBase64.startsWith('data:')
+      ? imageBase64
+      : `data:image/jpeg;base64,${imageBase64}`
 
     console.log('fal.ai request:', JSON.stringify({
       prompt: fullPrompt?.substring(0, 100),
       strength: modeStrength,
-      hasImageUrl: !!imageUrl,
+      hasImageUrl: !!dataUri,
     }))
 
-    const response = await fetch('https://fal.run/fal-ai/flux-2/klein/4b/lora', {
-      method: 'POST',
-      headers: {
-        Authorization: `Key ${process.env.STREKI_FAL_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
+    const result = await fal.subscribe('fal-ai/flux-2/klein/4b/lora', {
+      input: {
         prompt: fullPrompt,
-        image_url: imageUrl,
+        image_url: dataUri,
         strength: modeStrength,
         loras: [
           {
@@ -134,25 +89,12 @@ export default async function handler(req, res) {
             scale: 1.0,
           },
         ],
-        num_inference_steps: 8,
-      }),
+      },
     })
 
-    const data = await response.json().catch(() => null)
+    console.log('fal.ai full response:', JSON.stringify(result.data))
 
-    console.log('fal.ai full response:', JSON.stringify(data))
-
-    if (!response.ok) {
-      const errorMessage =
-        data?.detail ??
-        data?.error?.message ??
-        data?.error ??
-        'Failed to convert image'
-
-      return createJsonResponse(res, response.status, { error: errorMessage })
-    }
-
-    const nextImageUrl = getImageUrlFromResponse(data)
+    const nextImageUrl = getImageUrlFromResponse(result.data)
 
     if (!nextImageUrl) {
       return createJsonResponse(res, 502, { error: 'fal.ai returned no image URL' })
