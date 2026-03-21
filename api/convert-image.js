@@ -23,6 +23,13 @@ const getImageUrlFromResponse = (data) =>
   null
 
 export default async function handler(req, res) {
+  console.log('convert-image body:', JSON.stringify({
+    hasImageBase64: !!req.body?.imageBase64,
+    imageBase64Length: req.body?.imageBase64?.length,
+    modeContent: req.body?.modeContent,
+    modeStrength: req.body?.modeStrength,
+  }))
+
   if (req.method !== 'POST') {
     return createJsonResponse(res, 405, { error: 'Method Not Allowed' })
   }
@@ -55,8 +62,14 @@ export default async function handler(req, res) {
       })
     }
 
-    const prompt = `${modeContent}\n\n${stylePrompt}`
-    const imageUrl = imageBase64.startsWith('data:') ? imageBase64 : `data:image/png;base64,${imageBase64}`
+    const fullPrompt = `${modeContent}\n\n${stylePrompt}`
+    const imageUrl = imageBase64.startsWith('data:') ? imageBase64 : `data:image/jpeg;base64,${imageBase64}`
+
+    console.log('fal.ai request:', JSON.stringify({
+      prompt: fullPrompt?.substring(0, 100),
+      strength: modeStrength,
+      hasImageUrl: !!imageUrl,
+    }))
 
     const response = await fetch('https://fal.run/fal-ai/flux-lora', {
       method: 'POST',
@@ -65,7 +78,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        prompt,
+        prompt: fullPrompt,
         image_url: imageUrl,
         strength: modeStrength,
         loras: [
