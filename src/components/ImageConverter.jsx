@@ -1,6 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { getConvertModes } from '../utils/apiUtils'
 
+const modeLabelMap = {
+  convert_image: 'Detaljert illustrasjon',
+  convert_inspire: 'Enkel illustrasjon',
+}
+
 function ImageConverter({ onSubmit }) {
   const [modes, setModes] = useState([])
   const [selectedModeName, setSelectedModeName] = useState('')
@@ -129,7 +134,7 @@ function ImageConverter({ onSubmit }) {
                 >
                   {modes.slice(0, 3).map((mode) => (
                     <option key={mode.name} value={mode.name}>
-                      {mode.name}
+                      {modeLabelMap[mode.name] ?? mode.name}
                     </option>
                   ))}
                 </select>
