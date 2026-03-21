@@ -27,9 +27,15 @@ export default async function handler(req, res) {
   const payload = req.body ?? {}
   const name = payload.name?.trim()
   const content = payload.content?.trim()
+  const isConvertPrompt = typeof name === 'string' && name.startsWith('convert_')
+  const strength = isConvertPrompt ? Number(payload.strength) : null
 
   if (!name || !content) {
     return createJsonResponse(res, 400, { error: 'Fields name and content are required' })
+  }
+
+  if (isConvertPrompt && (!Number.isFinite(strength) || strength < 0.1 || strength > 1)) {
+    return createJsonResponse(res, 400, { error: 'Field strength must be a number between 0.1 and 1.0' })
   }
 
   const client = createClient(connectionString)
@@ -40,10 +46,12 @@ export default async function handler(req, res) {
     const result = await client.query(
       `
         UPDATE prompts
-        SET content = $2, updated_at = NOW()
+        SET content = $2,
+            strength = $3,
+            updated_at = NOW()
         WHERE name = $1
       `,
-      [name, content],
+      [name, content, strength],
     )
 
     if (result.rowCount === 0) {

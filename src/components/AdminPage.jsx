@@ -18,6 +18,7 @@ function AdminPage() {
   const [prompts, setPrompts] = useState([])
   const [images, setImages] = useState([])
   const [promptContents, setPromptContents] = useState({})
+  const [promptStrengths, setPromptStrengths] = useState({})
   const [promptStatus, setPromptStatus] = useState({})
   const [isLoadingPrompts, setIsLoadingPrompts] = useState(true)
   const [isLoadingImages, setIsLoadingImages] = useState(true)
@@ -36,6 +37,12 @@ function AdminPage() {
       setPromptContents(
         nextPrompts.reduce((accumulator, prompt) => {
           accumulator[prompt.name] = prompt.content ?? ''
+          return accumulator
+        }, {}),
+      )
+      setPromptStrengths(
+        nextPrompts.reduce((accumulator, prompt) => {
+          accumulator[prompt.name] = prompt.strength ?? ''
           return accumulator
         }, {}),
       )
@@ -77,6 +84,17 @@ function AdminPage() {
     }))
   }
 
+  const handlePromptStrengthChange = (name, strength) => {
+    setPromptStrengths((currentStrengths) => ({
+      ...currentStrengths,
+      [name]: strength,
+    }))
+    setPromptStatus((currentStatus) => ({
+      ...currentStatus,
+      [name]: '',
+    }))
+  }
+
   const handlePromptSave = async (name) => {
     setPromptStatus((currentStatus) => ({
       ...currentStatus,
@@ -87,6 +105,7 @@ function AdminPage() {
       await updatePrompt({
         name,
         content: promptContents[name] ?? '',
+        strength: name.startsWith('convert_') ? Number(promptStrengths[name]) : null,
       })
 
       setPromptStatus((currentStatus) => ({
@@ -138,12 +157,13 @@ function AdminPage() {
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             {sortedPrompts.map((prompt) => {
               const status = promptStatus[prompt.name]
+              const isConvertPrompt = prompt.name.startsWith('convert_')
               const isSaving = status === 'saving'
               const isSaved = status === 'saved'
               const isError = status && !isSaving && !isSaved
 
               return (
-                <article key={prompt.id ?? prompt.name} className="rounded-xl border border-slate-200 p-4">
+                <article key={prompt.name} className="rounded-xl border border-slate-200 p-4">
                   <label className="block text-sm font-medium text-slate-900" htmlFor={`prompt-${prompt.name}`}>
                     {prompt.name}
                   </label>
@@ -153,6 +173,23 @@ function AdminPage() {
                     onChange={(event) => handlePromptChange(prompt.name, event.target.value)}
                     className="mt-3 min-h-64 w-full rounded-lg border border-slate-300 px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                   />
+                  {isConvertPrompt ? (
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-slate-900" htmlFor={`prompt-strength-${prompt.name}`}>
+                        Strength
+                      </label>
+                      <input
+                        id={`prompt-strength-${prompt.name}`}
+                        type="number"
+                        min="0.1"
+                        max="1.0"
+                        step="0.05"
+                        value={promptStrengths[prompt.name] ?? ''}
+                        onChange={(event) => handlePromptStrengthChange(prompt.name, event.target.value)}
+                        className="mt-2 w-full rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
+                      />
+                    </div>
+                  ) : null}
                   <div className="mt-3 flex items-center gap-3">
                     <button
                       type="button"

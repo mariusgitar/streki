@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     await client.connect()
 
     const result = await client.query(`
-      SELECT id, name, content, updated_at
+      SELECT name, content, strength
       FROM prompts
       ORDER BY name ASC
     `)
