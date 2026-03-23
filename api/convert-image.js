@@ -32,7 +32,6 @@ export default async function handler(req, res) {
     hasImageBase64: !!req.body?.imageBase64,
     imageBase64Length: req.body?.imageBase64?.length,
     modeContent: req.body?.modeContent,
-    modeStrength: req.body?.modeStrength,
   }))
 
   if (req.method !== 'POST') {
@@ -50,11 +49,10 @@ export default async function handler(req, res) {
   const payload = req.body ?? {}
   const imageBase64 = payload.imageBase64?.trim()
   const modeContent = payload.modeContent?.trim()
-  const modeStrength = Number(payload.modeStrength)
 
-  if (!imageBase64 || !modeContent || Number.isNaN(modeStrength)) {
+  if (!imageBase64 || !modeContent) {
     return createJsonResponse(res, 400, {
-      error: 'Fields imageBase64, modeContent, and modeStrength are required',
+      error: 'Fields imageBase64 and modeContent are required',
     })
   }
 
@@ -75,6 +73,8 @@ export default async function handler(req, res) {
       ? imageBase64
       : `data:image/jpeg;base64,${imageBase64}`
     const imageUrls = [dataUri]
+    const modelName = null
+    const embeddings = []
     const guidanceScale = 7
     const numSteps = 28
     const loras = [
@@ -84,28 +84,20 @@ export default async function handler(req, res) {
       },
     ]
 
-    console.log('fal.ai request:', JSON.stringify({
-      prompt: fullPrompt?.substring(0, 100),
-      strength: modeStrength,
-      hasImageUrl: !!dataUri,
-    }))
-
-    console.log('fal.ai full request body:', JSON.stringify({
-      prompt: fullPrompt?.substring(0, 50),
-      hasImageUrls: !!(imageUrls?.length),
-      loras: loras,
+    const requestBody = {
+      prompt: fullPrompt,
+      model_name: modelName,
+      image_urls: imageUrls,
+      loras,
+      embeddings,
       guidance_scale: guidanceScale,
-      num_inference_steps: numSteps
-    }))
+      num_inference_steps: numSteps,
+    }
+
+    console.log('fal.ai full request body:', JSON.stringify(requestBody))
 
     const result = await fal.subscribe('fal-ai/flux-2/klein/4b/base/edit/lora', {
-      input: {
-        prompt: fullPrompt,
-        image_urls: imageUrls,
-        guidance_scale: guidanceScale,
-        num_inference_steps: numSteps,
-        loras,
-      },
+      input: requestBody,
     })
 
     console.log('fal.ai full response:', JSON.stringify(result.data))
