@@ -72,11 +72,6 @@ export default async function handler(req, res) {
     const dataUri = imageBase64.startsWith('data:')
       ? imageBase64
       : `data:image/jpeg;base64,${imageBase64}`
-    const imageUrls = [dataUri]
-    const modelName = null
-    const embeddings = []
-    const guidanceScale = 7
-    const numSteps = 28
     const loras = [
       {
         path: 'https://v3b.fal.media/files/b/0a92e984/0Vyp4Z-SZOz7Hk83YwYvC_pytorch_lora_weights.safetensors',
@@ -86,17 +81,15 @@ export default async function handler(req, res) {
 
     const requestBody = {
       prompt: fullPrompt,
-      model_name: modelName,
-      image_urls: imageUrls,
+      image_url: dataUri,
       loras,
-      embeddings,
-      guidance_scale: guidanceScale,
-      num_inference_steps: numSteps,
+      strength: 0.85,
+      num_inference_steps: 28,
     }
 
     console.log('fal.ai full request body:', JSON.stringify(requestBody))
 
-    const result = await fal.subscribe('fal-ai/flux-2/klein/4b/base/edit/lora', {
+    const result = await fal.subscribe('fal-ai/flux-general/image-to-image', {
       input: requestBody,
     })
 
