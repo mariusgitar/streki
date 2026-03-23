@@ -67,10 +67,22 @@ export default async function handler(req, res) {
       })
     }
 
-    const fullPrompt = `${modeContent}\n\n${stylePrompt}`
+    const promptIncludesStylePrompt = modeContent.includes(stylePrompt)
+    const fullPrompt = promptIncludesStylePrompt
+      ? modeContent
+      : `${modeContent}\n\n${stylePrompt}`
     const dataUri = imageBase64.startsWith('data:')
       ? imageBase64
       : `data:image/jpeg;base64,${imageBase64}`
+    const imageUrls = [dataUri]
+    const guidanceScale = 7
+    const numSteps = 28
+    const loras = [
+      {
+        path: 'https://v3b.fal.media/files/b/0a92e984/0Vyp4Z-SZOz7Hk83YwYvC_pytorch_lora_weights.safetensors',
+        scale: 1.0,
+      },
+    ]
 
     console.log('fal.ai request:', JSON.stringify({
       prompt: fullPrompt?.substring(0, 100),
@@ -78,18 +90,21 @@ export default async function handler(req, res) {
       hasImageUrl: !!dataUri,
     }))
 
+    console.log('fal.ai full request body:', JSON.stringify({
+      prompt: fullPrompt?.substring(0, 50),
+      hasImageUrls: !!(imageUrls?.length),
+      loras: loras,
+      guidance_scale: guidanceScale,
+      num_inference_steps: numSteps
+    }))
+
     const result = await fal.subscribe('fal-ai/flux-2/klein/4b/base/edit/lora', {
       input: {
         prompt: fullPrompt,
-        image_urls: [dataUri],
-        guidance_scale: 7,
-        num_inference_steps: 28,
-        loras: [
-          {
-            path: 'https://v3b.fal.media/files/b/0a92e984/0Vyp4Z-SZOz7Hk83YwYvC_pytorch_lora_weights.safetensors',
-            scale: 1.0,
-          },
-        ],
+        image_urls: imageUrls,
+        guidance_scale: guidanceScale,
+        num_inference_steps: numSteps,
+        loras,
       },
     })
 
