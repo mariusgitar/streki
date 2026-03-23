@@ -88,6 +88,11 @@ export default async function handler(req, res) {
     }
 
     console.log('fal.ai full request body:', JSON.stringify(requestBody))
+    console.log('LORA CHECK:', JSON.stringify({
+      loras: loras,
+      loraPath: loras?.[0]?.path,
+      loraScale: loras?.[0]?.scale
+    }))
 
     const result = await fal.subscribe('fal-ai/flux-lora/image-to-image', {
       input: requestBody,
