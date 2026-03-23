@@ -82,12 +82,12 @@ export default async function handler(req, res) {
       input: {
         prompt: fullPrompt,
         image_urls: [dataUri],
-        negative_prompt: 'photorealistic, clean lines, polished, colored, detailed background, smooth, professional illustration',
-        num_inference_steps: 4,
+        guidance_scale: 7,
+        num_inference_steps: 28,
         loras: [
           {
             path: 'https://v3b.fal.media/files/b/0a92e984/0Vyp4Z-SZOz7Hk83YwYvC_pytorch_lora_weights.safetensors',
-            scale: 1.4,
+            scale: 1.0,
           },
         ],
       },
