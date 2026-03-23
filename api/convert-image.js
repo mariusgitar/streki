@@ -89,7 +89,7 @@ export default async function handler(req, res) {
 
     console.log('fal.ai full request body:', JSON.stringify(requestBody))
 
-    const result = await fal.subscribe('fal-ai/flux-general/image-to-image', {
+    const result = await fal.subscribe('fal-ai/flux-lora/image-to-image', {
       input: requestBody,
     })
 
