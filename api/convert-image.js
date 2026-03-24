@@ -28,12 +28,6 @@ const getImageUrlFromResponse = (data) =>
   null
 
 export default async function handler(req, res) {
-  console.log('convert-image body:', JSON.stringify({
-    hasImageBase64: !!req.body?.imageBase64,
-    imageBase64Length: req.body?.imageBase64?.length,
-    modeContent: req.body?.modeContent,
-  }))
-
   if (req.method !== 'POST') {
     return createJsonResponse(res, 405, { error: 'Method Not Allowed' })
   }
@@ -81,24 +75,17 @@ export default async function handler(req, res) {
 
     const requestBody = {
       prompt: fullPrompt,
-      image_url: dataUri,
+      model_name: null,
+      image_urls: [dataUri],
       loras,
-      strength: 0.85,
+      embeddings: [],
+      guidance_scale: 7,
       num_inference_steps: 28,
     }
 
-    console.log('fal.ai full request body:', JSON.stringify(requestBody))
-    console.log('LORA CHECK:', JSON.stringify({
-      loras: loras,
-      loraPath: loras?.[0]?.path,
-      loraScale: loras?.[0]?.scale
-    }))
-
-    const result = await fal.subscribe('fal-ai/flux-lora/image-to-image', {
+    const result = await fal.subscribe('fal-ai/flux-2/klein/4b/base/edit/lora', {
       input: requestBody,
     })
-
-    console.log('fal.ai full response:', JSON.stringify(result.data))
 
     const nextImageUrl = getImageUrlFromResponse(result.data)
 
