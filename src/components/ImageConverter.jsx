@@ -4,6 +4,7 @@ import { getConvertModes } from '../utils/apiUtils'
 const modeLabelMap = {
   convert_image: 'Detaljert illustrasjon',
   convert_inspire: 'Enkel illustrasjon',
+  convert_experimental: '🧪 Eksperimentell (test)',
 }
 
 function ImageConverter({ onSubmit }) {
@@ -138,6 +139,11 @@ function ImageConverter({ onSubmit }) {
                     </option>
                   ))}
                 </select>
+                {selectedModeName === 'convert_experimental' ? (
+                  <p className="mt-2 text-xs text-amber-700">
+                    Dette er en testmodus og kan gi uventede resultater
+                  </p>
+                ) : null}
               </div>
               <div className="flex flex-wrap gap-3">
                 <button

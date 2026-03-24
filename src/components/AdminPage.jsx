@@ -21,7 +21,7 @@ const promptSections = [
   },
   {
     title: 'Konverteringsmoduser (Flux)',
-    promptNames: ['convert_expand', 'convert_image', 'convert_inspire', 'style_prompt'],
+    promptNames: ['convert_expand', 'convert_image', 'convert_inspire', 'convert_experimental', 'style_prompt'],
   },
 ]
 
@@ -42,6 +42,9 @@ const promptMetadata = {
   },
   convert_inspire: {
     label: 'Enkel illustrasjon',
+  },
+  convert_experimental: {
+    label: 'Eksperimentell (test)',
   },
   style_prompt: {
     label: 'Global stilprompt',
