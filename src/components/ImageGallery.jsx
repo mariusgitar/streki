@@ -100,15 +100,6 @@ function ImageGallery({ images, searchQuery = '', filter = 'all', children = nul
     (image) => matchesSearchQuery(image, searchQuery) && matchesFilter(image, filter),
   )
 
-  const loadImageElementFromUrl = (url) =>
-    new Promise((resolve, reject) => {
-      const image = new Image()
-      image.crossOrigin = 'anonymous'
-      image.onload = () => resolve(image)
-      image.onerror = () => reject(new Error('Kunne ikke laste bildet for bakgrunnsfjerning.'))
-      image.src = url
-    })
-
   const processSelectedImage = async (tolerance) => {
     if (!selectedImage?.image_url) {
       return
@@ -118,7 +109,13 @@ function ImageGallery({ images, searchQuery = '', filter = 'all', children = nul
     setLightboxErrorMessage('')
 
     try {
-      const imageElement = await loadImageElementFromUrl(getImageSrc(selectedImage.image_url))
+      const imageElement = await new Promise((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => resolve(img)
+        img.onerror = () => reject(new Error('Kunne ikke laste bildet for bakgrunnsfjerning.'))
+        img.src = selectedImage.image_url
+      })
       const nextCanvas = removeWhiteBackground(imageElement, tolerance)
       setProcessedCanvas(nextCanvas)
     } catch (error) {
