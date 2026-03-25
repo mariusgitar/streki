@@ -67,6 +67,9 @@ function AdminPage() {
   const [promptErrorMessage, setPromptErrorMessage] = useState('')
   const [imageErrorMessage, setImageErrorMessage] = useState('')
   const [deletingImageId, setDeletingImageId] = useState(null)
+  const [isMigratingImages, setIsMigratingImages] = useState(false)
+  const [migrationProgress, setMigrationProgress] = useState({ current: 0, total: 0 })
+  const [migrationResultMessage, setMigrationResultMessage] = useState('')
 
   const promptsBySection = useMemo(
     () =>
@@ -188,6 +191,40 @@ function AdminPage() {
     }
   }
 
+  const handleMigrateImages = async () => {
+    const legacyImageCount = images.filter(
+      (image) => typeof image.image_url === 'string' && !image.image_url.startsWith('https://'),
+    ).length
+
+    setMigrationProgress({ current: 0, total: legacyImageCount })
+    setMigrationResultMessage('')
+    setImageErrorMessage('')
+    setIsMigratingImages(true)
+
+    try {
+      const response = await fetch('/api/admin-migrate', {
+        method: 'POST',
+      })
+
+      const data = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        throw new Error(data?.error || 'Kunne ikke migrere bilder.')
+      }
+
+      const migrated = Number.isInteger(data?.migrated) ? data.migrated : 0
+      const errors = Number.isInteger(data?.errors) ? data.errors : 0
+
+      setMigrationProgress({ current: legacyImageCount, total: legacyImageCount })
+      setMigrationResultMessage(`Migrert: ${migrated} bilder, Feil: ${errors}`)
+      await loadImages()
+    } catch (error) {
+      setImageErrorMessage(error instanceof Error ? error.message : 'Kunne ikke migrere bilder.')
+    } finally {
+      setIsMigratingImages(false)
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-6 py-10">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10">
@@ -302,6 +339,27 @@ function AdminPage() {
               ))}
             </div>
           )}
+        </section>
+
+        <section className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+          <h2 className="text-xl font-semibold text-slate-900">Vedlikehold</h2>
+          <p className="mt-2 text-sm text-slate-600">Migrer eldre bilder med lokale URL-er til R2-lagring.</p>
+          <div className="mt-4 flex flex-col items-start gap-3">
+            <button
+              type="button"
+              onClick={handleMigrateImages}
+              disabled={isMigratingImages || isLoadingImages}
+              className="inline-flex rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+            >
+              {isMigratingImages ? 'Migrerer...' : 'Migrer gamle bilder til R2'}
+            </button>
+            {isMigratingImages ? (
+              <p className="text-sm text-slate-600">
+                Migrerer bilde {migrationProgress.current} av {migrationProgress.total}...
+              </p>
+            ) : null}
+            {migrationResultMessage ? <p className="text-sm text-emerald-700">{migrationResultMessage}</p> : null}
+          </div>
         </section>
       </div>
     </main>
