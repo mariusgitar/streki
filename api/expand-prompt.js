@@ -19,6 +19,16 @@ const getSystemPrompt = async (mode) => {
   }
 }
 
+const getVisionPrompt = async () => {
+  const promptName = 'experimental_vision_prompt'
+  const result = await pool.query('SELECT content FROM prompts WHERE name = $1 LIMIT 1', [promptName])
+
+  return {
+    promptName,
+    content: result.rows[0]?.content?.trim() ?? null,
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return createJsonResponse(res, 405, { error: 'Method Not Allowed' })
@@ -46,15 +56,11 @@ export default async function handler(req, res) {
   }
 
   const userPrompt = `Translate and expand this into a detailed English description for an illustration. Description: ${beskrivelse}`
-  const imageDescriptionPrompt = `Describe this image in detail for an illustrator.
-Focus on: who or what is in the image, what they
-are doing, their posture and position, objects
-present, spatial relationships, and setting.
-Do not mention colors, art style or medium.
-Return only the description, no preamble.`
 
   try {
-    const { promptName, content: systemPrompt } = await getSystemPrompt(mode)
+    const { promptName, content: systemPrompt } = hasImageInput
+      ? await getVisionPrompt()
+      : await getSystemPrompt(mode)
 
     if (!systemPrompt) {
       return createJsonResponse(res, 500, {
@@ -70,10 +76,10 @@ Return only the description, no preamble.`
       },
       body: JSON.stringify({
         model: 'google/gemini-2.5-flash-lite',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          hasImageInput
-            ? {
+        messages: hasImageInput
+          ? [
+            { role: 'system', content: systemPrompt },
+            {
               role: 'user',
               content: [
                 {
@@ -82,14 +88,13 @@ Return only the description, no preamble.`
                     url: `data:image/jpeg;base64,${imageBase64}`,
                   },
                 },
-                {
-                  type: 'text',
-                  text: imageDescriptionPrompt,
-                },
               ],
-            }
-            : { role: 'user', content: userPrompt },
-        ],
+            },
+          ]
+          : [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
       }),
     })
 

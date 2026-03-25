@@ -23,6 +23,10 @@ const promptSections = [
     title: 'Konverteringsmoduser (Flux)',
     promptNames: ['convert_expand', 'convert_image', 'convert_inspire', 'convert_experimental', 'style_prompt'],
   },
+  {
+    title: 'Eksperimentell modus',
+    promptNames: ['experimental_vision_prompt'],
+  },
 ]
 
 const promptMetadata = {
@@ -45,6 +49,10 @@ const promptMetadata = {
   },
   convert_experimental: {
     label: 'Eksperimentell (test)',
+  },
+  experimental_vision_prompt: {
+    label: 'Bildebeskrivelse-prompt (Gemini Vision)',
+    description: 'Brukes når Eksperimentell (test) velges i opplasting.',
   },
   style_prompt: {
     label: 'Global stilprompt',
@@ -203,7 +211,10 @@ function AdminPage() {
           {promptErrorMessage ? <p className="mt-4 text-red-600">{promptErrorMessage}</p> : null}
           <div className="mt-6 space-y-8">
             {promptsBySection.map((section) => (
-              <div key={section.title}>
+              <div
+                key={section.title}
+                className={section.title === 'Eksperimentell modus' ? 'border-t border-slate-200 pt-8' : ''}
+              >
                 <h3 className="text-lg font-semibold text-slate-900">{section.title}</h3>
                 <div className="mt-4 grid gap-6 md:grid-cols-2">
                   {section.prompts.map((prompt) => {
