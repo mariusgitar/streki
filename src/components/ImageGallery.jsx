@@ -6,7 +6,13 @@ const getImageSrc = (imageUrl) => {
     return ''
   }
 
-  return imageUrl
+  const trimmedImageUrl = imageUrl.trim()
+
+  if (trimmedImageUrl.startsWith('https://')) {
+    return trimmedImageUrl
+  }
+
+  return `data:image/png;base64,${trimmedImageUrl}`
 }
 
 const getBeskrivelse = (image) => String(image?.motiv ?? '').trim()
