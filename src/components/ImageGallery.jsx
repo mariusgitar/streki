@@ -89,12 +89,8 @@ function ImageGallery({ images, searchQuery = '', filter = 'all', children = nul
   const [isRemovingBackground, setIsRemovingBackground] = useState(false)
   const [lightboxErrorMessage, setLightboxErrorMessage] = useState('')
   const canvasContainerRef = useRef(null)
-
-  if (!Array.isArray(images) || images.length === 0) {
-    return null
-  }
-
-  const filteredImages = images.filter(
+  const safeImages = Array.isArray(images) ? images : []
+  const filteredImages = safeImages.filter(
     (image) => matchesSearchQuery(image, searchQuery) && matchesFilter(image, filter),
   )
 
@@ -173,11 +169,15 @@ function ImageGallery({ images, searchQuery = '', filter = 'all', children = nul
     processSelectedImage(backgroundTolerance)
   }, [backgroundTolerance])
 
+  if (safeImages.length === 0) {
+    return null
+  }
+
   return (
     <section className="mt-10 text-left">
       <h2 className="mb-4 text-2xl font-semibold text-slate-900">Bildegalleri</h2>
       {children}
-      <p className="mb-4 mt-4 text-sm text-slate-500">{getResultLabel(filteredImages.length, images.length)}</p>
+      <p className="mb-4 mt-4 text-sm text-slate-500">{getResultLabel(filteredImages.length, safeImages.length)}</p>
       {filteredImages.length === 0 ? (
         <p className="rounded-lg border border-dashed border-slate-300 px-4 py-6 text-sm text-slate-500">
           Ingen bilder matcher søket
