@@ -37,12 +37,21 @@ export default async function handler(req, res) {
   const payload = req.body ?? {}
   const beskrivelse = payload.beskrivelse?.trim()
   const mode = typeof payload.mode === 'string' ? payload.mode.trim() : ''
+  const imageBase64Input = typeof payload.imageBase64 === 'string' ? payload.imageBase64.trim() : ''
+  const imageBase64 = imageBase64Input.replace(/^data:image\/[a-zA-Z0-9.+-]+;base64,/, '')
+  const hasImageInput = Boolean(imageBase64)
 
-  if (!beskrivelse) {
-    return createJsonResponse(res, 400, { error: 'Field beskrivelse is required' })
+  if (!beskrivelse && !hasImageInput) {
+    return createJsonResponse(res, 400, { error: 'Either beskrivelse or imageBase64 is required' })
   }
 
   const userPrompt = `Translate and expand this into a detailed English description for an illustration. Description: ${beskrivelse}`
+  const imageDescriptionPrompt = `Describe this image in detail for an illustrator.
+Focus on: who or what is in the image, what they
+are doing, their posture and position, objects
+present, spatial relationships, and setting.
+Do not mention colors, art style or medium.
+Return only the description, no preamble.`
 
   try {
     const { promptName, content: systemPrompt } = await getSystemPrompt(mode)
@@ -63,7 +72,23 @@ export default async function handler(req, res) {
         model: 'google/gemini-2.5-flash-lite',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
+          hasImageInput
+            ? {
+              role: 'user',
+              content: [
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:image/jpeg;base64,${imageBase64}`,
+                  },
+                },
+                {
+                  type: 'text',
+                  text: imageDescriptionPrompt,
+                },
+              ],
+            }
+            : { role: 'user', content: userPrompt },
         ],
       }),
     })
