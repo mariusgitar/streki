@@ -1,6 +1,6 @@
 import { fal } from '@fal-ai/client'
 import pg from 'pg'
-import { uploadToR2 } from './upload-to-r2'
+import { uploadToR2 } from './upload-to-r2.js'
 
 const { Pool } = pg
 
