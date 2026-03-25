@@ -1,4 +1,5 @@
 import pg from 'pg'
+import { uploadToR2 } from './upload-to-r2'
 
 const { Pool } = pg
 
@@ -23,6 +24,8 @@ const getImageUrlFromResponse = (data) =>
   data?.image?.url ??
   data?.url ??
   null
+
+const createFileName = () => `images/${Date.now()}-${Math.random().toString(36).slice(2)}.png`
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -85,13 +88,26 @@ export default async function handler(req, res) {
       return createJsonResponse(res, response.status, { error: errorMessage })
     }
 
-    const imageUrl = getImageUrlFromResponse(data)
+    const falImageUrl = getImageUrlFromResponse(data)
 
-    if (!imageUrl) {
+    if (!falImageUrl) {
       return createJsonResponse(res, 502, { error: 'fal.ai returned no image URL' })
     }
 
-    return createJsonResponse(res, 200, { imageUrl })
+    const imageResponse = await fetch(falImageUrl)
+
+    if (!imageResponse.ok) {
+      return createJsonResponse(res, 502, { error: 'Unable to download image from fal.ai' })
+    }
+
+    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
+    const imageBase64 = imageBuffer.toString('base64')
+    const r2Url = await uploadToR2({
+      imageBase64,
+      fileName: createFileName(),
+    })
+
+    return createJsonResponse(res, 200, { imageUrl: r2Url })
   } catch (error) {
     console.error('Error generating image:', error)
     return createJsonResponse(res, 502, { error: 'Unable to reach fal.ai' })

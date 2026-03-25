@@ -2,16 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { deleteImage, getImages, getPrompts, updatePrompt } from '../utils/apiUtils'
 
-const getImageSrc = (imageData) => {
-  if (typeof imageData !== 'string' || !imageData.trim()) {
+const getImageSrc = (imageUrl) => {
+  if (typeof imageUrl !== 'string' || !imageUrl.trim()) {
     return ''
   }
 
-  if (imageData.startsWith('data:')) {
-    return imageData
-  }
-
-  return `data:image/png;base64,${imageData}`
+  return imageUrl
 }
 
 const promptSections = [
@@ -286,7 +282,7 @@ function AdminPage() {
               {images.map((image) => (
                 <article key={image.id} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
                   <img
-                    src={getImageSrc(image.image_data)}
+                    src={getImageSrc(image.image_url)}
                     alt={`${image.motiv} - ${image.scene}`}
                     className="h-56 w-full object-cover"
                   />

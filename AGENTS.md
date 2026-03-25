@@ -18,18 +18,25 @@ utvider til et rikt engelsk bildeprompt. Flux genererer illustrasjonen.
 - OPENROUTER_API_KEY lagres som miljøvariabel i Vercel
 - Skal aldri eksponeres i frontend-kode
 
-
 ## Database
 - Neon Postgres (serverless)
 - Tilkobling via miljøvariabelen NEON_DATABASE_URL
 - Tabeller:
-  - images (id, motiv, scene, expanded_prompt, image_data, created_at)
+  - images (id, motiv, scene, expanded_prompt, image_url, created_at)
   - prompts (id, name, content, updated_at)
-- Bilder lagres som base64-streng i image_data-kolonnen
+- Kun image_url (string) lagres i Neon, ikke base64
 
 ## Miljøvariabler
 - STREKI_OPEN_ROUTER_KEY — OpenRouter API-nøkkel
 - NEON_DATABASE_URL — Neon connection string
+
+## Bildelagring
+- Bilder lagres i Cloudflare R2 object storage
+- Kun image_url (string) lagres i Neon, ikke base64
+- R2-tilkobling via miljøvariabler:
+  R2_ACCOUNT_ID, R2_ACCESS_KEY_ID,
+  R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL
+- AWS S3-kompatibelt API brukes for opplasting (@aws-sdk/client-s3)
 
 ## Filstruktur
 src/

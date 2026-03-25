@@ -1,15 +1,11 @@
 import React, { useState } from 'react'
 
-const getImageSrc = (imageData) => {
-  if (typeof imageData !== 'string' || !imageData.trim()) {
+const getImageSrc = (imageUrl) => {
+  if (typeof imageUrl !== 'string' || !imageUrl.trim()) {
     return ''
   }
 
-  if (imageData.startsWith('data:')) {
-    return imageData
-  }
-
-  return `data:image/png;base64,${imageData}`
+  return imageUrl
 }
 
 const getBeskrivelse = (image) => String(image?.motiv ?? '').trim()
@@ -29,7 +25,7 @@ const getDownloadFilename = (image) => {
 }
 
 const downloadImage = async (image) => {
-  const src = getImageSrc(image?.image_data)
+  const src = getImageSrc(image?.image_url)
 
   if (!src) {
     return
@@ -123,7 +119,7 @@ function ImageGallery({ images, searchQuery = '', filter = 'all', children = nul
                     aria-label={`Åpne ${beskrivelse || 'illustrasjon'} i full størrelse`}
                   >
                     <img
-                      src={getImageSrc(image.image_data)}
+                      src={getImageSrc(image.image_url)}
                       alt={beskrivelse || 'Lagret illustrasjon'}
                       className="aspect-square w-full object-cover"
                     />
@@ -171,7 +167,7 @@ function ImageGallery({ images, searchQuery = '', filter = 'all', children = nul
               ⬇
             </button>
             <img
-              src={getImageSrc(selectedImage.image_data)}
+              src={getImageSrc(selectedImage.image_url)}
               alt={getBeskrivelse(selectedImage) || 'Lagret illustrasjon'}
               className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain"
             />

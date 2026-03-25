@@ -1,5 +1,6 @@
 import { fal } from '@fal-ai/client'
 import pg from 'pg'
+import { uploadToR2 } from './upload-to-r2'
 
 const { Pool } = pg
 
@@ -26,6 +27,8 @@ const getImageUrlFromResponse = (data) =>
   data?.image?.url ??
   data?.url ??
   null
+
+const createFileName = () => `images/${Date.now()}-${Math.random().toString(36).slice(2)}.png`
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -87,13 +90,26 @@ export default async function handler(req, res) {
       input: requestBody,
     })
 
-    const nextImageUrl = getImageUrlFromResponse(result.data)
+    const falImageUrl = getImageUrlFromResponse(result.data)
 
-    if (!nextImageUrl) {
+    if (!falImageUrl) {
       return createJsonResponse(res, 502, { error: 'fal.ai returned no image URL' })
     }
 
-    return createJsonResponse(res, 200, { imageUrl: nextImageUrl })
+    const imageResponse = await fetch(falImageUrl)
+
+    if (!imageResponse.ok) {
+      return createJsonResponse(res, 502, { error: 'Unable to download image from fal.ai' })
+    }
+
+    const nextImageBuffer = Buffer.from(await imageResponse.arrayBuffer())
+    const nextImageBase64 = nextImageBuffer.toString('base64')
+    const r2Url = await uploadToR2({
+      imageBase64: nextImageBase64,
+      fileName: createFileName(),
+    })
+
+    return createJsonResponse(res, 200, { imageUrl: r2Url })
   } catch (error) {
     console.error('Error converting image:', error)
     return createJsonResponse(res, 502, { error: 'Unable to reach fal.ai' })

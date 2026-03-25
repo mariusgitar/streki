@@ -29,7 +29,7 @@ const createTables = async (client) => {
       motiv TEXT NOT NULL,
       scene TEXT NOT NULL,
       expanded_prompt TEXT NOT NULL,
-      image_data TEXT NOT NULL,
+      image_url TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT NOW()
     )
   `)

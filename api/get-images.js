@@ -30,7 +30,7 @@ export default async function handler(req, res) {
     await client.connect()
 
     const result = await client.query(`
-      SELECT id, motiv, scene, expanded_prompt, image_data, created_at
+      SELECT id, motiv, scene, expanded_prompt, image_url, created_at
       FROM images
       ORDER BY created_at DESC
     `)
