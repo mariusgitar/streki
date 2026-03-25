@@ -47,6 +47,13 @@ function ImageConverter({ onSubmit }) {
     [modes, selectedModeName],
   )
 
+  const sortedModes = useMemo(() => {
+    const experimentalMode = modes.find((mode) => mode.name === 'convert_experimental')
+    const nonExperimentalModes = modes.filter((mode) => mode.name !== 'convert_experimental')
+
+    return experimentalMode ? [...nonExperimentalModes, experimentalMode] : nonExperimentalModes
+  }, [modes])
+
   const handleFileSelection = (file) => {
     if (!file || !file.type.startsWith('image/')) {
       setErrorMessage('Velg en bildefil for å fortsette.')
@@ -133,7 +140,7 @@ function ImageConverter({ onSubmit }) {
                   onChange={(event) => setSelectedModeName(event.target.value)}
                   className="w-full rounded-lg border border-slate-300 px-4 py-3 text-slate-900 shadow-sm outline-none transition focus:border-slate-500 focus:ring-2 focus:ring-slate-200"
                 >
-                  {modes.slice(0, 3).map((mode) => (
+                  {sortedModes.map((mode) => (
                     <option key={mode.name} value={mode.name}>
                       {modeLabelMap[mode.name] ?? mode.name}
                     </option>

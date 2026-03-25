@@ -115,15 +115,15 @@ function HomePage() {
       let nextExpandedPrompt = ''
 
       if (isExperimentalMode) {
+        nextExpandedPrompt = await expandPrompt({ imageBase64 })
+        nextImageUrl = await generateImage({ expandedPrompt: nextExpandedPrompt })
+      } else {
         nextImageUrl = await convertImage({
           imageBase64: imageDataUrl,
           modeContent,
           modeStrength,
         })
         nextExpandedPrompt = `${modeContent}`
-      } else {
-        nextExpandedPrompt = await expandPrompt({ imageBase64 })
-        nextImageUrl = await generateImage({ expandedPrompt: nextExpandedPrompt })
       }
 
       setExpandedPrompt(nextExpandedPrompt)
