@@ -8,6 +8,7 @@ import GeneratingAnimation from './components/GeneratingAnimation'
 import PasswordGate from './components/PasswordGate'
 import ImageConverter from './components/ImageConverter'
 import { convertImage, expandPrompt, generateImage, getImages, saveImage } from './utils/apiUtils'
+import { removeWhiteBackground } from './utils/backgroundUtils'
 
 const fileToDataUrl = (file) =>
   new Promise((resolve, reject) => {
@@ -40,6 +41,8 @@ function HomePage() {
   const [galleryErrorMessage, setGalleryErrorMessage] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [galleryFilter, setGalleryFilter] = useState('all')
+  const [backgroundTolerance, setBackgroundTolerance] = useState(240)
+  const [processedCanvas, setProcessedCanvas] = useState(null)
 
   const loadImages = async () => {
     try {
@@ -62,6 +65,43 @@ function HomePage() {
     setIsSaving(false)
     setSaveErrorMessage('')
     setIsSaved(false)
+    setProcessedCanvas(null)
+  }
+
+  const loadImageElementFromUrl = (url) =>
+    new Promise((resolve, reject) => {
+      const image = new Image()
+      image.crossOrigin = 'anonymous'
+      image.onload = () => resolve(image)
+      image.onerror = () => reject(new Error('Kunne ikke laste bildet for bakgrunnsfjerning.'))
+      image.src = url
+    })
+
+  const handleRemoveBackground = async () => {
+    try {
+      setErrorMessage('')
+      const imageElement = await loadImageElementFromUrl(imageUrl)
+      const nextCanvas = removeWhiteBackground(imageElement, backgroundTolerance)
+      setProcessedCanvas(nextCanvas)
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Noe gikk galt ved bakgrunnsfjerning.')
+    }
+  }
+
+  const handleDownloadImage = () => {
+    if (processedCanvas) {
+      const transparentImageDataUrl = processedCanvas.toDataURL('image/png')
+      const link = document.createElement('a')
+      link.href = transparentImageDataUrl
+      link.download = 'streki-illustrasjon-transparent.png'
+      link.click()
+      return
+    }
+
+    const link = document.createElement('a')
+    link.href = imageUrl
+    link.download = 'streki-illustrasjon.png'
+    link.click()
   }
 
   const handleSubmit = async ({ beskrivelse, skipSave }) => {
@@ -186,7 +226,52 @@ function HomePage() {
         {errorMessage ? <p className="mt-6 text-red-600">{errorMessage}</p> : null}
         {imageUrl ? (
           <div className="mt-8">
-            <img src={imageUrl} alt={beskrivelse || 'Generert illustrasjon'} className="mx-auto max-w-full" />
+            {processedCanvas ? (
+              <div
+                className="mx-auto inline-block rounded-md p-2"
+                style={{
+                  backgroundImage:
+                    'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)',
+                  backgroundSize: '16px 16px',
+                  backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+                }}
+                ref={(container) => {
+                  if (container && processedCanvas.parentNode !== container) {
+                    container.innerHTML = ''
+                    container.appendChild(processedCanvas)
+                  }
+                }}
+              />
+            ) : (
+              <img src={imageUrl} alt={beskrivelse || 'Generert illustrasjon'} className="mx-auto max-w-full" />
+            )}
+            <div className="mx-auto mt-4 flex max-w-sm flex-col gap-3">
+              <label htmlFor="background-tolerance" className="text-sm font-medium text-slate-700">
+                Styrke: {backgroundTolerance}
+              </label>
+              <input
+                id="background-tolerance"
+                type="range"
+                min="200"
+                max="255"
+                value={backgroundTolerance}
+                onChange={(event) => setBackgroundTolerance(Number(event.target.value))}
+              />
+              <button
+                type="button"
+                onClick={handleRemoveBackground}
+                className="rounded-md bg-slate-800 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+              >
+                Fjern hvit bakgrunn
+              </button>
+              <button
+                type="button"
+                onClick={handleDownloadImage}
+                className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-100"
+              >
+                Last ned bilde
+              </button>
+            </div>
             {isSaving ? <p className="mt-4 text-sm text-slate-500">Lagrer i bildebanken...</p> : null}
             {isSaved ? <p className="mt-4 text-sm text-slate-500">Lagret i bildebanken</p> : null}
             {saveErrorMessage ? <p className="mt-4 text-red-600">{saveErrorMessage}</p> : null}
