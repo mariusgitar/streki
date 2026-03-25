@@ -40,22 +40,13 @@ export default async function handler(req, res) {
   try {
     await client.connect()
 
-    const imageResponse = await fetch(imageUrl)
-
-    if (!imageResponse.ok) {
-      throw new Error(`Unable to fetch image: ${imageResponse.status}`)
-    }
-
-    const imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
-    const imageData = imageBuffer.toString('base64')
-
     const result = await client.query(
       `
-        INSERT INTO images (motiv, scene, expanded_prompt, image_data)
+        INSERT INTO images (motiv, scene, expanded_prompt, image_url)
         VALUES ($1, $2, $3, $4)
         RETURNING id
       `,
-      [beskrivelse, '', expandedPrompt, imageData],
+      [beskrivelse, '', expandedPrompt, imageUrl],
     )
 
     const id = result.rows[0]?.id

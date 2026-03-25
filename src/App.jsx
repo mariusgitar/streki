@@ -26,8 +26,6 @@ const fileToDataUrl = (file) =>
     reader.readAsDataURL(file)
   })
 
-const dataUrlToBase64 = (dataUrl) => dataUrl.split(',')[1] ?? ''
-
 function HomePage() {
   const [activeTab, setActiveTab] = useState('describe')
   const [isLoading, setIsLoading] = useState(false)
@@ -109,13 +107,12 @@ function HomePage() {
 
     try {
       const imageDataUrl = await fileToDataUrl(file)
-      const imageBase64 = dataUrlToBase64(imageDataUrl)
       const isExperimentalMode = modeName === 'convert_experimental'
       let nextImageUrl = ''
       let nextExpandedPrompt = ''
 
       if (isExperimentalMode) {
-        nextExpandedPrompt = await expandPrompt({ imageBase64 })
+        nextExpandedPrompt = await expandPrompt({ imageBase64: imageDataUrl })
         nextImageUrl = await generateImage({ expandedPrompt: nextExpandedPrompt })
       } else {
         nextImageUrl = await convertImage({
