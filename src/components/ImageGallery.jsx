@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { removeWhiteBackground } from '../utils/backgroundUtils'
 
 const getImageSrc = (imageUrl) => {
   if (typeof imageUrl !== 'string' || !imageUrl.trim()) {
@@ -83,6 +84,11 @@ const getResultLabel = (filteredCount, totalCount) => {
 
 function ImageGallery({ images, searchQuery = '', filter = 'all', children = null }) {
   const [selectedImage, setSelectedImage] = useState(null)
+  const [backgroundTolerance, setBackgroundTolerance] = useState(240)
+  const [processedCanvas, setProcessedCanvas] = useState(null)
+  const [isRemovingBackground, setIsRemovingBackground] = useState(false)
+  const [lightboxErrorMessage, setLightboxErrorMessage] = useState('')
+  const canvasContainerRef = useRef(null)
 
   if (!Array.isArray(images) || images.length === 0) {
     return null
@@ -91,6 +97,81 @@ function ImageGallery({ images, searchQuery = '', filter = 'all', children = nul
   const filteredImages = images.filter(
     (image) => matchesSearchQuery(image, searchQuery) && matchesFilter(image, filter),
   )
+
+  const loadImageElementFromUrl = (url) =>
+    new Promise((resolve, reject) => {
+      const image = new Image()
+      image.crossOrigin = 'anonymous'
+      image.onload = () => resolve(image)
+      image.onerror = () => reject(new Error('Kunne ikke laste bildet for bakgrunnsfjerning.'))
+      image.src = url
+    })
+
+  const processSelectedImage = async (tolerance) => {
+    if (!selectedImage?.image_url) {
+      return
+    }
+
+    setIsRemovingBackground(true)
+    setLightboxErrorMessage('')
+
+    try {
+      const imageElement = await loadImageElementFromUrl(getImageSrc(selectedImage.image_url))
+      const nextCanvas = removeWhiteBackground(imageElement, tolerance)
+      setProcessedCanvas(nextCanvas)
+    } catch (error) {
+      setLightboxErrorMessage(error instanceof Error ? error.message : 'Noe gikk galt ved bakgrunnsfjerning.')
+    } finally {
+      setIsRemovingBackground(false)
+    }
+  }
+
+  const handleOpenLightbox = (image) => {
+    setSelectedImage(image)
+    setProcessedCanvas(null)
+    setBackgroundTolerance(240)
+    setLightboxErrorMessage('')
+  }
+
+  const handleCloseLightbox = () => {
+    setSelectedImage(null)
+    setProcessedCanvas(null)
+    setBackgroundTolerance(240)
+    setLightboxErrorMessage('')
+  }
+
+  const handleDownloadFromLightbox = () => {
+    if (!selectedImage) {
+      return
+    }
+
+    if (processedCanvas) {
+      const link = document.createElement('a')
+      link.href = processedCanvas.toDataURL('image/png')
+      link.download = getDownloadFilename(selectedImage)
+      link.click()
+      return
+    }
+
+    downloadImage(selectedImage)
+  }
+
+  useEffect(() => {
+    if (!processedCanvas || !canvasContainerRef.current) {
+      return
+    }
+
+    canvasContainerRef.current.innerHTML = ''
+    canvasContainerRef.current.appendChild(processedCanvas)
+  }, [processedCanvas])
+
+  useEffect(() => {
+    if (!processedCanvas) {
+      return
+    }
+
+    processSelectedImage(backgroundTolerance)
+  }, [backgroundTolerance])
 
   return (
     <section className="mt-10 text-left">
@@ -114,7 +195,7 @@ function ImageGallery({ images, searchQuery = '', filter = 'all', children = nul
                 <div className="relative">
                   <button
                     type="button"
-                    onClick={() => setSelectedImage(image)}
+                    onClick={() => handleOpenLightbox(image)}
                     className="w-full"
                     aria-label={`Åpne ${beskrivelse || 'illustrasjon'} i full størrelse`}
                   >
@@ -143,7 +224,7 @@ function ImageGallery({ images, searchQuery = '', filter = 'all', children = nul
       {selectedImage ? (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setSelectedImage(null)}
+          onClick={handleCloseLightbox}
           role="dialog"
           aria-modal="true"
           aria-label="Bilde i full størrelse"
@@ -151,26 +232,71 @@ function ImageGallery({ images, searchQuery = '', filter = 'all', children = nul
           <div className="relative max-h-full max-w-5xl" onClick={(event) => event.stopPropagation()}>
             <button
               type="button"
-              onClick={() => setSelectedImage(null)}
+              onClick={handleCloseLightbox}
               className="absolute right-2 top-2 rounded-md bg-black/70 px-3 py-1 text-2xl leading-none text-white hover:bg-black/85"
               aria-label="Lukk bildevisning"
             >
               ×
             </button>
-            <button
-              type="button"
-              onClick={() => downloadImage(selectedImage)}
-              className="absolute right-14 top-2 rounded-md bg-black/70 p-2 text-xs text-white hover:bg-black/85"
-              aria-label="Last ned bilde"
-              title="Last ned bilde"
+            <div
+              className="flex min-h-[280px] min-w-[280px] max-w-[90vw] items-center justify-center rounded-lg p-3"
+              style={{
+                backgroundImage:
+                  'linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%)',
+                backgroundSize: '16px 16px',
+                backgroundPosition: '0 0, 0 8px, 8px -8px, -8px 0px',
+              }}
             >
-              ⬇
-            </button>
-            <img
-              src={getImageSrc(selectedImage.image_url)}
-              alt={getBeskrivelse(selectedImage) || 'Lagret illustrasjon'}
-              className="max-h-[85vh] max-w-[90vw] rounded-lg object-contain"
-            />
+              {processedCanvas ? (
+                <div ref={canvasContainerRef} className="max-h-[70vh] max-w-[90vw] overflow-auto" />
+              ) : (
+                <img
+                  src={getImageSrc(selectedImage.image_url)}
+                  alt={getBeskrivelse(selectedImage) || 'Lagret illustrasjon'}
+                  className="max-h-[70vh] max-w-[90vw] rounded-lg object-contain"
+                />
+              )}
+            </div>
+            <div className="mt-3 flex flex-wrap items-center gap-3 rounded-lg bg-slate-900/85 p-3 text-white">
+              <button
+                type="button"
+                onClick={() => processSelectedImage(backgroundTolerance)}
+                className="rounded-md bg-white/15 px-3 py-2 text-sm font-semibold transition hover:bg-white/25 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={isRemovingBackground}
+              >
+                {isRemovingBackground ? 'Fjerner bakgrunn...' : 'Fjern hvit bakgrunn'}
+              </button>
+              {processedCanvas ? (
+                <>
+                  <label htmlFor="lightbox-background-tolerance" className="text-sm">
+                    Styrke: {backgroundTolerance}
+                  </label>
+                  <input
+                    id="lightbox-background-tolerance"
+                    type="range"
+                    min="200"
+                    max="255"
+                    value={backgroundTolerance}
+                    onChange={(event) => setBackgroundTolerance(Number(event.target.value))}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setProcessedCanvas(null)}
+                    className="rounded-md bg-white/15 px-3 py-2 text-sm font-semibold transition hover:bg-white/25"
+                  >
+                    Tilbakestill
+                  </button>
+                </>
+              ) : null}
+              <button
+                type="button"
+                onClick={handleDownloadFromLightbox}
+                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100"
+              >
+                Last ned
+              </button>
+            </div>
+            {lightboxErrorMessage ? <p className="mt-2 text-sm text-red-300">{lightboxErrorMessage}</p> : null}
           </div>
         </div>
       ) : null}
