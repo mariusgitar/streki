@@ -64,10 +64,39 @@ function ImageConverter({ onSubmit }) {
       URL.revokeObjectURL(previewUrl)
     }
 
-    setSelectedFile(file)
+    const fileName = file.name?.trim() ? file.name : 'Limt inn bilde.png'
+    const nextFile = file.name?.trim() ? file : new File([file], fileName, { type: file.type || 'image/png' })
+
+    setSelectedFile(nextFile)
     setPreviewUrl(URL.createObjectURL(file))
     setErrorMessage('')
   }
+
+  useEffect(() => {
+    const handlePaste = (event) => {
+      const clipboardItems = Array.from(event.clipboardData?.items ?? [])
+      const imageItem = clipboardItems.find((item) => item.type.startsWith('image/'))
+
+      if (!imageItem) {
+        return
+      }
+
+      const imageFile = imageItem.getAsFile()
+
+      if (!imageFile) {
+        return
+      }
+
+      event.preventDefault()
+      handleFileSelection(imageFile)
+    }
+
+    window.addEventListener('paste', handlePaste)
+
+    return () => {
+      window.removeEventListener('paste', handlePaste)
+    }
+  }, [previewUrl])
 
   const handleDrop = (event) => {
     event.preventDefault()
@@ -130,6 +159,7 @@ function ImageConverter({ onSubmit }) {
           <div className="grid gap-5 md:grid-cols-[160px_minmax(0,1fr)] md:items-start">
             <img src={previewUrl} alt="Forhåndsvisning av opplastet bilde" className="h-40 w-40 rounded-xl object-cover" />
             <div className="space-y-4">
+              <p className="text-sm text-slate-600">Fil: {selectedFile?.name || 'Limt inn bilde'}</p>
               <div>
                 <label htmlFor="convert-mode" className="mb-2 block text-sm font-medium text-slate-900">
                   Velg konverteringsmodus
