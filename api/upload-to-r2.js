@@ -1,48 +1,35 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 
-const getRequiredEnv = (name) => {
-  const value = process.env[name]
-
-  if (!value) {
-    throw new Error(`Missing ${name} configuration`)
-  }
-
-  return value
-}
-
-const createR2Client = () => {
-  const accountId = getRequiredEnv('R2_ACCOUNT_ID')
-  const accessKeyId = getRequiredEnv('R2_ACCESS_KEY_ID')
-  const secretAccessKey = getRequiredEnv('R2_SECRET_ACCESS_KEY')
-
-  return new S3Client({
-    region: 'auto',
-    endpoint: `https://${accountId}.r2.cloudflarestorage.com`,
-    credentials: {
-      accessKeyId,
-      secretAccessKey,
-    },
-  })
-}
-
 export async function uploadToR2({ imageBase64, fileName }) {
-  if (!imageBase64 || !fileName) {
-    throw new Error('Fields imageBase64 and fileName are required')
+  try {
+    if (!imageBase64 || !fileName) {
+      throw new Error('uploadToR2 krever både imageBase64 og fileName')
+    }
+
+    const client = new S3Client({
+      endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      region: 'auto',
+      credentials: {
+        accessKeyId: process.env.R2_ACCESS_KEY_ID,
+        secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+      },
+    })
+
+    const buffer = Buffer.from(imageBase64, 'base64')
+
+    await client.send(
+      new PutObjectCommand({
+        Bucket: process.env.R2_BUCKET_NAME,
+        Key: fileName,
+        Body: buffer,
+        ContentType: 'image/png',
+      }),
+    )
+
+    return `${process.env.R2_PUBLIC_URL}/${fileName}`
+  } catch (error) {
+    throw new Error(
+      `Kunne ikke laste opp bilde til Cloudflare R2: ${error instanceof Error ? error.message : String(error)}`,
+    )
   }
-
-  const bucketName = getRequiredEnv('R2_BUCKET_NAME')
-  const publicUrl = getRequiredEnv('R2_PUBLIC_URL').replace(/\/$/, '')
-  const imageBuffer = Buffer.from(imageBase64, 'base64')
-  const client = createR2Client()
-
-  await client.send(
-    new PutObjectCommand({
-      Bucket: bucketName,
-      Key: fileName,
-      Body: imageBuffer,
-      ContentType: 'image/png',
-    }),
-  )
-
-  return `${publicUrl}/${fileName}`
 }
